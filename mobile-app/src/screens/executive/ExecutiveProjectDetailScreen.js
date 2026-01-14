@@ -775,9 +775,20 @@ const ExecutiveProjectDetailScreen = ({ navigation, route }) => {
                                         onPress={() => handleAssignVendor(vendor._id)}
                                         disabled={assigningVendor}
                                     >
-                                        <View style={styles.vendorAvatar}>
-                                            <Feather name="user" size={20} color={COLORS.primary} />
-                                        </View>
+                                        {vendor.profileImage ? (
+                                            <Image 
+                                                source={{ 
+                                                    uri: vendor.profileImage.includes('?') 
+                                                        ? `${vendor.profileImage}&t=${new Date().getTime()}` 
+                                                        : `${vendor.profileImage}?t=${new Date().getTime()}` 
+                                                }} 
+                                                style={styles.vendorAvatar} 
+                                            />
+                                        ) : (
+                                            <View style={styles.vendorAvatar}>
+                                                <Feather name="user" size={20} color={COLORS.primary} />
+                                            </View>
+                                        )}
                                         <View style={{ flex: 1 }}>
                                             <Text style={styles.vendorName}>{vendor.firstName} {vendor.lastName}</Text>
                                             <Text style={styles.vendorEmail}>Vendor Team • {vendor.email}</Text>
@@ -1376,7 +1387,14 @@ const MediaTab = ({ project, mediaFiles = [], onUpload, uploading, onDelete }) =
                                         <Text style={{ color: '#fff', fontSize: 10, marginTop: 4 }}>Video</Text>
                                     </View>
                                 ) : (
-                                    <Image source={{ uri: media.url }} style={styles.galleryImage} />
+                                    <Image 
+                                        source={{ 
+                                            uri: media.url.includes('?') 
+                                                ? `${media.url}&t=${new Date().getTime()}` 
+                                                : `${media.url}?t=${new Date().getTime()}` 
+                                        }} 
+                                        style={styles.galleryImage} 
+                                    />
                                 )}
 
                                 {/* Delete button - only for uploaded files, not project images */}
@@ -1460,7 +1478,11 @@ const MediaTab = ({ project, mediaFiles = [], onUpload, uploading, onDelete }) =
                     {/* Main Image */}
                     {imageOnlyMedia.length > 0 && (
                         <Image
-                            source={{ uri: imageOnlyMedia[currentImageIndex]?.url }}
+                            source={{ 
+                                uri: imageOnlyMedia[currentImageIndex]?.url?.includes('?') 
+                                    ? `${imageOnlyMedia[currentImageIndex]?.url}&t=${new Date().getTime()}` 
+                                    : `${imageOnlyMedia[currentImageIndex]?.url}?t=${new Date().getTime()}` 
+                            }}
                             resizeMode="contain"
                             style={{
                                 width: '90%',

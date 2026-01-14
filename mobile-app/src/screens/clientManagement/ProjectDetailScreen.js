@@ -1396,7 +1396,14 @@ const TeamTab = ({ project, navigation, onRefresh, currentUser }) => {
       {executiveEmployee ? (
         <View style={styles.teamMember}>
           {executiveEmployee.profileImage ? (
-            <Image source={{ uri: executiveEmployee.profileImage }} style={styles.teamAvatar} />
+            <Image 
+              source={{ 
+                uri: executiveEmployee.profileImage.includes('?') 
+                  ? `${executiveEmployee.profileImage}&t=${new Date().getTime()}` 
+                  : `${executiveEmployee.profileImage}?t=${new Date().getTime()}` 
+              }} 
+              style={styles.teamAvatar} 
+            />
           ) : (
             <View style={styles.teamAvatar}>
               <Feather name="user" size={20} color={COLORS.primary} />
@@ -1473,7 +1480,14 @@ const TeamTab = ({ project, navigation, onRefresh, currentUser }) => {
                     disabled={assigning}
                   >
                     {emp.profileImage ? (
-                      <Image source={{ uri: emp.profileImage }} style={styles.teamAvatar} />
+                      <Image 
+                        source={{ 
+                          uri: emp.profileImage.includes('?') 
+                            ? `${emp.profileImage}&t=${new Date().getTime()}` 
+                            : `${emp.profileImage}?t=${new Date().getTime()}` 
+                        }} 
+                        style={styles.teamAvatar} 
+                      />
                     ) : (
                       <View style={styles.teamAvatar}>
                         <Feather name="user" size={20} color={COLORS.primary} />

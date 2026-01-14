@@ -9,6 +9,7 @@ import {
     Alert,
     Platform,
     ActivityIndicator,
+    Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
@@ -257,6 +258,29 @@ const ExecutiveDashboardScreen = ({ navigation }) => {
                                 <View style={styles.projectInfo}>
                                     <Text style={styles.projectTitle} numberOfLines={1}>{project.title}</Text>
                                     <Text style={styles.projectStatus}>{project.status?.replace('-', ' ')}</Text>
+                                    {project.client && (
+                                        <View style={styles.clientInfo}>
+                                            {project.client.profileImage ? (
+                                                <Image 
+                                                    source={{ 
+                                                        uri: project.client.profileImage.includes('?') 
+                                                            ? `${project.client.profileImage}&t=${new Date().getTime()}` 
+                                                            : `${project.client.profileImage}?t=${new Date().getTime()}` 
+                                                    }} 
+                                                    style={styles.clientAvatar} 
+                                                />
+                                            ) : (
+                                                <View style={styles.clientAvatarPlaceholder}>
+                                                    <Text style={styles.clientInitials}>
+                                                        {project.client.firstName?.[0]}{project.client.lastName?.[0]}
+                                                    </Text>
+                                                </View>
+                                            )}
+                                            <Text style={styles.clientName}>
+                                                {project.client.firstName} {project.client.lastName}
+                                            </Text>
+                                        </View>
+                                    )}
                                 </View>
                                 <Feather name="chevron-right" size={20} color={theme.colors.text.secondary} />
                             </TouchableOpacity>
@@ -401,6 +425,36 @@ const styles = StyleSheet.create({
         color: theme.colors.text.secondary,
         marginTop: 2,
         textTransform: 'capitalize',
+    },
+    clientInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 6,
+    },
+    clientAvatar: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        marginRight: 6,
+        backgroundColor: theme.colors.background.secondary,
+    },
+    clientAvatarPlaceholder: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        marginRight: 6,
+        backgroundColor: theme.colors.primary[100],
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    clientInitials: {
+        fontSize: 8,
+        fontWeight: 'bold',
+        color: theme.colors.primary[700],
+    },
+    clientName: {
+        fontSize: 12,
+        color: theme.colors.text.secondary,
     },
 });
 

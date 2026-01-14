@@ -235,6 +235,47 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: 20,
   },
+  welcomeSection: {
+    paddingHorizontal: 24,
+    marginTop: 24,
+    marginBottom: 10,
+  },
+  profileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  profileImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: theme.colors.background.secondary,
+  },
+  profilePlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: theme.colors.primary[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.primary[200],
+  },
+  profileInitials: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: theme.colors.primary[700],
+  },
+  welcomeText: {
+    fontSize: 14,
+    color: theme.colors.text.secondary,
+    marginBottom: 4,
+  },
+  userNameText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+  },
   timeDisplay: {
     fontSize: 14,
     color: theme.colors.text.secondary,

@@ -12,7 +12,8 @@ import {
   Modal,
   TextInput,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Image
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -1119,11 +1120,28 @@ const OwnerDashboardScreen = ({ navigation }) => {
             style={styles.clientCard}
             onPress={() => navigation.navigate('Clients', { clientId: client._id })}
           >
-            <View style={styles.clientAvatar}>
-              <Text style={styles.clientAvatarText}>
-                {(client.firstName?.[0] || 'C').toUpperCase()}
-              </Text>
-            </View>
+            {client.profileImage ? (
+                <Image
+                    source={{
+                        uri: client.profileImage.includes('?')
+                            ? `${client.profileImage}&t=${new Date().getTime()}`
+                            : `${client.profileImage}?t=${new Date().getTime()}`
+                    }}
+                    style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 22,
+                        marginRight: 12,
+                        backgroundColor: '#f0f0f0'
+                    }}
+                />
+            ) : (
+                <View style={styles.clientAvatar}>
+                    <Text style={styles.clientAvatarText}>
+                        {(client.firstName?.[0] || 'C').toUpperCase()}
+                    </Text>
+                </View>
+            )}
             <View style={styles.clientInfo}>
               <Text style={styles.clientName}>
                 {client.firstName} {client.lastName}

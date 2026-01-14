@@ -287,9 +287,16 @@ export default function VendorTeamProfileScreen({ navigation }) {
                 {/* Profile Card */}
                 <View style={styles.profileCard}>
                     <View style={styles.avatarContainer}>
-                        <TouchableOpacity onPress={pickImage} disabled={isSaving}>
+                        <TouchableOpacity onPress={handleImagePicker} disabled={isSaving}>
                             {profileImage ? (
-                                <Image source={{ uri: profileImage }} style={styles.avatar} />
+                                <Image 
+                                    source={{ 
+                                        uri: profileImage.includes('?') 
+                                            ? `${profileImage}&t=${new Date().getTime()}` 
+                                            : `${profileImage}?t=${new Date().getTime()}` 
+                                    }} 
+                                    style={styles.avatar} 
+                                />
                             ) : (
                                 <View style={styles.avatarPlaceholder}>
                                     <Text style={styles.avatarText}>
@@ -321,7 +328,7 @@ export default function VendorTeamProfileScreen({ navigation }) {
 
                 {/* Account Section */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitlhandleccouePicknrt</Text>
+                    <Text style={styles.sectionTitle}>Account</Text>
                     <View style={styles.menuContainer}>
                         <MenuItem
                             icon="user"
@@ -338,8 +345,13 @@ export default function VendorTeamProfileScreen({ navigation }) {
                     </View>
                 </View>
 
-                {/* Securile={styles.secSe
-                <MenuI      title="Change Password"
+                {/* Security Section */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Security</Text>
+                    <View style={styles.menuContainer}>
+                        <MenuItem
+                            icon="lock"
+                            title="Change Password"
                             subtitle="Update your password"
                             onPress={() => setShowPasswordModal(true)}
                         />
@@ -506,76 +518,6 @@ const styles = StyleSheet.create({
     menuContent: { flex: 1 },
     menuTitle: { fontSize: 16, fontWeight: '500', color: theme.colors.text.primary, marginBottom: 2 },
     menuSubtitle: { fontSize: 13, color: theme.colors.text.secondary },
-    dangerText: { color: theme.colors.error[600] },
-    // OTP Modal
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-    otpModal: { backgroundColor: theme.colors.background.card, marginHorizontal: 24, borderRadius: 20, padding: 24, width: '90%', maxWidth: 400 },
-    otpHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-    otpTitle: { fontSize: 20, fontWeight: '700', color: theme.colors.text.primary },
-    closeButton: { padding: 4 },
-    otpLabel: { fontSize: 14, color: theme.colors.text.secondary, marginBottom: 12 },
-    otpInput: {
-        backgroundColor: theme.colors.background.tertiary,
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        fontSize: 16,
-        color: theme.colors.text.primary,
-        borderWidth: 1,
-        borderColor: theme.colors.primary[100],
-    },
-    otpButton: {
-        backgroundColor: theme.colors.primary[600],
-        borderRadius: 12,
-        paddingVertical: 14,
-        alignItems: 'center',
-        marginTop: 16,
-    },
-    otpButtonText: { fontSize: 16, fontWeight: '600', color: theme.colors.text.white },
-    resendLink: { alignItems: 'center', marginTop: 16 },
-    resendText: { fontSize: 14, color: theme.colors.primary[600], fontWeight: '500' },
-    qrImage: {
-        width: 200,
-        height: 200,
-        alignSelf: 'center',
-        marginVertical: 12,
-    },, color: theme.colors.text.secondary },
-    dangerText: { color: theme.colors.error[600] },
-    // OTP Modal
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-    otpModal: { backgroundColor: theme.colors.background.card, marginHorizontal: 24, borderRadius: 20, padding: 24, width: '90%', maxWidth: 400 },
-    otpHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-    otpTitle: { fontSize: 20, fontWeight: '700', color: theme.colors.text.primary },
-    closeButton: { padding: 4 },
-    otpLabel: { fontSize: 14,marginBottom: 12 ,
-    otpInput: {
-        backgroundColor: theme.colors.background.tertiary
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        fontSize: 16,
-        color: theme.colors.text.primary,
-        borderWidth: 1,
-        borderColor: theme.colors.primary[100],
-    },
-    otpButton: {
-        backgroundColor: theme.colors.primary[600],
-        borderRadius: 12,
-        paddingVertical: 14,
-        alignItems: 'center',
-        marginTop: 16,
-    },
-    otpButtonText: { fontSize: 16, fontWeight: '600', color: theme.colors.text.white },
-    resendLink: { alignItems: 'center', marginTop: 16 },
-    resendText: { fontSize: 14, color: theme.colors.primary[600], fontWeight: '500' },
-    qrImage: {
-        width: 200,
-        height: 200,
-        alignSelf: 'center',
-        marginVertical: 12,
-    },
-});
-});
     dangerText: { color: theme.colors.error[600] },
     // OTP Modal
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },

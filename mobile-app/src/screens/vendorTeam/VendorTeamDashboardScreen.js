@@ -112,7 +112,11 @@ const VendorTeamDashboardScreen = ({ navigation }) => {
                         <TouchableOpacity onPress={() => navigation.navigate('VendorTeamProfile')}>
                             {user?.profileImage ? (
                                 <Image 
-                                    source={{ uri: user.profileImage }} 
+                                    source={{ 
+                                        uri: user.profileImage.includes('?') 
+                                            ? `${user.profileImage}&t=${new Date().getTime()}` 
+                                            : `${user.profileImage}?t=${new Date().getTime()}` 
+                                    }} 
                                     style={styles.headerAvatar} 
                                 />
                             ) : (

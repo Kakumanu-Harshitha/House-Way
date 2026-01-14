@@ -498,7 +498,15 @@ const ProjectDetailsScreen = () => {
                   <View style={styles.teamMemberRow}>
                     <View style={styles.teamAvatar}>
                       {member.profileImage ? (
-                        <Image source={{ uri: member.profileImage }} style={styles.teamAvatarImg} />
+                        <Image
+                          source={{
+                            uri: member.profileImage.includes('?')
+                              ? `${member.profileImage}&t=${new Date().getTime()}`
+                              : `${member.profileImage}?t=${new Date().getTime()}`
+                          }}
+                          style={styles.teamAvatarImg}
+                          resizeMode="cover"
+                        />
                       ) : (
                         <Text style={styles.teamAvatarText}>{member.firstName?.[0]}{member.lastName?.[0]}</Text>
                       )}

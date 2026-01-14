@@ -191,9 +191,12 @@ export default function NegotiationChat({ route, navigation }) {
 
   const renderProfileImage = () => {
     if (user?.profileImage) {
+      const profileImageUri = user.profileImage.includes('?') 
+        ? `${user.profileImage}&t=${new Date().getTime()}` 
+        : `${user.profileImage}?t=${new Date().getTime()}`;
       return (
         <Image
-          source={{ uri: user.profileImage }}
+          source={{ uri: profileImageUri }}
           style={styles.profileImage}
           resizeMode="cover"
         />

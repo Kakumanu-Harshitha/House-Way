@@ -22,7 +22,11 @@ export default function ProjectCard({ project, onPress }) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
       <ImageBackground 
-        source={project.image ? {uri: project.image} : null} 
+        source={project.image ? {
+          uri: project.image.includes('?') 
+            ? `${project.image}&t=${new Date().getTime()}` 
+            : `${project.image}?t=${new Date().getTime()}`
+        } : null} 
         style={styles.bg} 
         imageStyle={{ borderRadius: theme.radius }}
       >

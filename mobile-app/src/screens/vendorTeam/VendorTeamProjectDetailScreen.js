@@ -341,7 +341,11 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                         <View key={employee._id || index} style={styles.teamMember}>
                             {employee.profileImage ? (
                                 <Image 
-                                    source={{ uri: employee.profileImage }} 
+                                    source={{ 
+                                        uri: employee.profileImage.includes('?') 
+                                            ? `${employee.profileImage}&t=${new Date().getTime()}` 
+                                            : `${employee.profileImage}?t=${new Date().getTime()}` 
+                                    }} 
                                     style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]} 
                                 />
                             ) : (
@@ -372,7 +376,11 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                             <View key={designer._id || index} style={styles.teamMember}>
                                 {designer.profileImage ? (
                                     <Image 
-                                        source={{ uri: designer.profileImage }} 
+                                        source={{ 
+                                            uri: designer.profileImage.includes('?') 
+                                                ? `${designer.profileImage}&t=${new Date().getTime()}` 
+                                                : `${designer.profileImage}?t=${new Date().getTime()}` 
+                                        }} 
                                         style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]} 
                                     />
                                 ) : (
@@ -399,7 +407,11 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                             <View key={vendor._id || index} style={styles.teamMember}>
                                 {vendor.profileImage ? (
                                     <Image 
-                                        source={{ uri: vendor.profileImage }} 
+                                        source={{ 
+                                            uri: vendor.profileImage.includes('?') 
+                                                ? `${vendor.profileImage}&t=${new Date().getTime()}` 
+                                                : `${vendor.profileImage}?t=${new Date().getTime()}` 
+                                        }} 
                                         style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]} 
                                     />
                                 ) : (
@@ -459,7 +471,11 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                         <View key={index} style={styles.teamMember}>
                             {member.profileImage ? (
                                 <Image 
-                                    source={{ uri: member.profileImage }} 
+                                    source={{ 
+                                        uri: member.profileImage.includes('?') 
+                                            ? `${member.profileImage}&t=${new Date().getTime()}` 
+                                            : `${member.profileImage}?t=${new Date().getTime()}` 
+                                    }} 
                                     style={styles.avatar} 
                                 />
                             ) : (
@@ -503,7 +519,11 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                             >
                                 {vendor.profileImage ? (
                                     <Image 
-                                        source={{ uri: vendor.profileImage }} 
+                                        source={{ 
+                                            uri: vendor.profileImage.includes('?') 
+                                                ? `${vendor.profileImage}&t=${new Date().getTime()}` 
+                                                : `${vendor.profileImage}?t=${new Date().getTime()}` 
+                                        }} 
                                         style={styles.avatar} 
                                     />
                                 ) : (

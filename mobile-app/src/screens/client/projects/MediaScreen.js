@@ -373,7 +373,11 @@ export default function MediaScreen() {
                   {item.type === "video" && (
                     <View style={styles.videoItem}>
                       <Image
-                        source={{ uri: item.thumbnail }}
+                        source={{ 
+                          uri: item.thumbnail.includes('?') 
+                            ? `${item.thumbnail}&t=${new Date().getTime()}` 
+                            : `${item.thumbnail}?t=${new Date().getTime()}` 
+                        }}
                         style={styles.gridImage}
                         onError={(error) => {
                           if (__DEV__) console.log('Thumbnail load error for:', item.thumbnail, error);
@@ -422,7 +426,11 @@ export default function MediaScreen() {
             <View style={styles.modalContent}>
               {selectedMedia.type === "photo" && (
                 <Image
-                  source={{ uri: selectedMedia.image }}
+                  source={{ 
+                    uri: selectedMedia.image.includes('?') 
+                      ? `${selectedMedia.image}&t=${new Date().getTime()}` 
+                      : `${selectedMedia.image}?t=${new Date().getTime()}` 
+                  }}
                   style={styles.modalImage}
                 />
               )}

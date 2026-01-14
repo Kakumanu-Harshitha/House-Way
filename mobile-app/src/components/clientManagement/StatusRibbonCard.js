@@ -56,7 +56,14 @@ const StatusRibbonCard = ({
         <View style={styles.avatarContainer}>
           <View style={styles.avatarWrapper}>
             {avatar ? (
-              <Image source={{ uri: avatar }} style={styles.avatar} />
+              <Image 
+                source={{ 
+                  uri: avatar.includes('?') 
+                    ? `${avatar}&t=${new Date().getTime()}` 
+                    : `${avatar}?t=${new Date().getTime()}` 
+                }} 
+                style={styles.avatar} 
+              />
             ) : (
               <View style={styles.defaultAvatar}>
                 <Feather name="user" size={28} color="#7487C1" />

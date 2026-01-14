@@ -488,7 +488,14 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         {team.map((member, idx) => (
           <View key={member._id || idx} style={styles.memberCard}>
             {member.profileImage ? (
-               <Image source={{ uri: member.profileImage }} style={styles.memberAvatar} />
+               <Image 
+                 source={{ 
+                   uri: member.profileImage.includes('?') 
+                     ? `${member.profileImage}&t=${new Date().getTime()}` 
+                     : `${member.profileImage}?t=${new Date().getTime()}` 
+                 }} 
+                 style={styles.memberAvatar} 
+               />
             ) : (
               <View style={styles.memberAvatar}>
                 <Text style={styles.memberAvatarText}>
