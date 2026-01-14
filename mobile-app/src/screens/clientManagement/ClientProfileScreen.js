@@ -139,10 +139,21 @@ const ClientProfileScreen = ({ navigation, route }) => {
 
         {/* Client Info Card */}
         <View style={styles.clientCard}>
-          <View style={styles.avatarContainer}>
-            <Text style={styles.avatarText}>
-              {client.firstName?.charAt(0)}{client.lastName?.charAt(0)}
-            </Text>
+          <View style={[styles.avatarContainer, client.profileImage && { backgroundColor: 'transparent' }]}>
+            {client.profileImage ? (
+              <Image
+                source={{
+                  uri: client.profileImage.includes('?')
+                    ? `${client.profileImage}&t=${new Date().getTime()}`
+                    : `${client.profileImage}?t=${new Date().getTime()}`
+                }}
+                style={styles.avatarImage}
+              />
+            ) : (
+              <Text style={styles.avatarText}>
+                {client.firstName?.charAt(0)}{client.lastName?.charAt(0)}
+              </Text>
+            )}
           </View>
           <Text style={styles.clientName}>{client.firstName} {client.lastName}</Text>
 

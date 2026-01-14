@@ -23,6 +23,7 @@ import { MaterialIcons, MaterialCommunityIcons, Ionicons } from '@expo/vector-ic
 import { useFocusEffect } from '@react-navigation/native';
 import { purchaseOrdersAPI } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import AppHeader from './components/AppHeader';
 import socket from '../../utils/socket';
 
 const VIEWED_ORDERS_KEY = '@vendor_viewed_orders';
@@ -338,7 +339,14 @@ const VendorOrdersScreen = ({ navigation }) => {
   
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
+      <AppHeader 
+        title="Purchase Orders" 
+        onMenu={() => navigation.openDrawer()} 
+        user={user}
+        onProfile={() => navigation.navigate('VendorProfile')}
+      />
+      
+      {/* Filters */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity

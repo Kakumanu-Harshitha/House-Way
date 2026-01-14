@@ -10,6 +10,7 @@ import {
     Alert,
     Platform,
     TextInput,
+    Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
@@ -193,11 +194,22 @@ const ExecutiveProjectListScreen = ({ navigation, route }) => {
                         marginTop: 8
                     }}>
                         <View style={styles.clientRow}>
+                        {item.client.profileImage ? (
+                            <Image 
+                                source={{ 
+                                    uri: item.client.profileImage.includes('?') 
+                                        ? `${item.client.profileImage}&t=${new Date().getTime()}` 
+                                        : `${item.client.profileImage}?t=${new Date().getTime()}` 
+                                }} 
+                                style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }} 
+                            />
+                        ) : (
                             <Feather name="user" size={14} color={COLORS.primary} />
-                            <Text style={[styles.clientName, { color: COLORS.text, fontWeight: '600' }]}>
-                                {item.client.firstName} {item.client.lastName}
-                            </Text>
-                        </View>
+                        )}
+                        <Text style={[styles.clientName, { color: COLORS.text, fontWeight: '600' }]}>
+                            {item.client.firstName} {item.client.lastName}
+                        </Text>
+                    </View>
                         {item.client.phone && (
                             <View style={[styles.clientRow, { marginTop: 4 }]}>
                                 <Feather name="phone" size={12} color={COLORS.textMuted} />

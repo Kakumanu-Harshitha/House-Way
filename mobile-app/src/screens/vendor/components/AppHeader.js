@@ -1,32 +1,59 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import theme from '../../../styles/theme';
 
-export default function AppHeader({ title, onBack, onMenu, onNotifications }) {
+export default function AppHeader({ title, onBack, onMenu, onNotifications, user, onProfile }) {
+  const renderProfileImage = () => {
+    if (user?.profileImage) {
+      return (
+        <Image
+          source={{ uri: user.profileImage }}
+          style={styles.profileImage}
+          resizeMode="cover"
+        />
+      );
+    }
+    return (
+      <View style={styles.avatarPlaceholder}>
+        <Text style={styles.avatarText}>
+          {user?.firstName?.[0] || user?.name?.[0] || 'U'}
+        </Text>
+      </View>
+    );
+  };
+
   return (
     <View style={styles.header}>
       {onBack ? (
-        <TouchableOpacity onPress={onBack}>
+        <TouchableOpacity onPress={onBack} style={styles.leftButton}>
           <Feather name="arrow-left" size={24} color={theme.colors.text.primary} />
         </TouchableOpacity>
       ) : onMenu ? (
-        <TouchableOpacity onPress={onMenu}>
+        <TouchableOpacity onPress={onMenu} style={styles.leftButton}>
           <Feather name="menu" size={24} color={theme.colors.text.primary} />
         </TouchableOpacity>
       ) : (
-        <View style={{ width: 24 }} />
+        <View style={styles.placeholderButton} />
       )}
       
-      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.title} numberOfLines={1}>{title}</Text>
       
-      {onNotifications ? (
-        <TouchableOpacity onPress={onNotifications}>
-          <Feather name="bell" size={24} color={theme.colors.text.primary} />
-        </TouchableOpacity>
-      ) : (
-        <View style={{ width: 24 }} />
-      )}
+      <View style={styles.rightContainer}>
+        {onNotifications && (
+          <TouchableOpacity onPress={onNotifications} style={styles.iconButton}>
+            <Feather name="bell" size={24} color={theme.colors.text.primary} />
+          </TouchableOpacity>
+        )}
+        
+        {user && (
+          <TouchableOpacity onPress={onProfile || (() => {})} style={styles.profileButton}>
+            {renderProfileImage()}
+          </TouchableOpacity>
+        )}
+
+        {!onNotifications && !user && <View style={styles.placeholderButton} />}
+      </View>
     </View>
   );
 }
@@ -46,6 +73,52 @@ const styles = StyleSheet.create({
   title: { 
     fontSize: 20, 
     fontWeight: '700', 
-    color: theme.colors.text.primary
+    color: theme.colors.text.primary,
+    flex: 1,
+    textAlign: 'center',
+  },
+  leftButton: {
+    width: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  placeholderButton: {
+    width: 40,
+  },
+  rightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    minWidth: 40,
+  },
+  iconButton: {
+    padding: 8,
+  },
+  profileButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginLeft: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  profileImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  avatarPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.primary[500],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });

@@ -221,6 +221,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ✅ Sync user data from backend without triggering an API update
+  const syncUser = async (userData) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+      dispatch({
+        type: AUTH_ACTIONS.UPDATE_USER,
+        payload: userData,
+      });
+      return { success: true };
+    } catch (error) {
+      console.error('[AuthContext] Sync user error:', error);
+      return { success: false, message: 'Failed to sync user data' };
+    }
+  };
+
   const clearError = () => dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
 
   const value = {
@@ -233,6 +248,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateUser,
+    syncUser,
     clearError,
   };
 

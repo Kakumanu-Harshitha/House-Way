@@ -16,6 +16,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAttendance } from '../../context/AttendanceContext';
 import BottomNavBar from '../../components/common/BottomNavBar';
 import { COLORS } from '../../styles/colors';
+import ChangePasswordModal from '../../components/ChangePasswordModal';
 
 const SettingsScreen = ({ navigation }) => {
     const { user, logout } = useAuth();
@@ -24,6 +25,7 @@ const SettingsScreen = ({ navigation }) => {
     const [monthlyStats, setMonthlyStats] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [checkingOut, setCheckingOut] = useState(false);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
 
     useEffect(() => {
         loadStats();
@@ -196,7 +198,7 @@ const SettingsScreen = ({ navigation }) => {
                         <SettingItem
                             icon="lock"
                             label="Change Password"
-                            onPress={() => navigation.navigate('Profile', { scrollToPassword: true })}
+                            onPress={() => setShowPasswordModal(true)}
                         />
                         <SettingItem
                             icon="bell"
@@ -240,6 +242,11 @@ const SettingsScreen = ({ navigation }) => {
                     <View style={{ height: 100 }} />
                 </ScrollView>
             </LinearGradient>
+
+            <ChangePasswordModal 
+                visible={showPasswordModal} 
+                onClose={() => setShowPasswordModal(false)} 
+            />
 
             <BottomNavBar navigation={navigation} activeTab="settings" />
         </View>

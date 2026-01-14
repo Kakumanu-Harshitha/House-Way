@@ -504,7 +504,20 @@ const ExecutiveProjectDetailScreen = ({ navigation, route }) => {
 
                     {project.client && (
                         <View style={styles.clientInfo}>
-                            <Feather name="user" size={14} color={COLORS.textMuted} />
+                            {project.client.profileImage ? (
+                                <Image 
+                                    source={{ 
+                                        uri: project.client.profileImage.includes('?') 
+                                            ? `${project.client.profileImage}&t=${new Date().getTime()}` 
+                                            : `${project.client.profileImage}?t=${new Date().getTime()}` 
+                                    }} 
+                                    style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }} 
+                                />
+                            ) : (
+                                <View style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8, backgroundColor: COLORS.primaryLight, justifyContent: 'center', alignItems: 'center' }}>
+                                    <Feather name="user" size={14} color={COLORS.primary} />
+                                </View>
+                            )}
                             <Text style={styles.clientName}>
                                 {project.client.firstName} {project.client.lastName}
                             </Text>
@@ -1525,7 +1538,14 @@ const VendorTab = ({ project, onAssign }) => (
             project.assignedVendors.map((vendor, index) => (
                 <View key={vendor._id || index} style={styles.vendorCard}>
                     {vendor.profileImage ? (
-                        <Image source={{ uri: vendor.profileImage }} style={styles.vendorAvatar} />
+                        <Image 
+                            source={{ 
+                                uri: vendor.profileImage.includes('?') 
+                                    ? `${vendor.profileImage}&t=${new Date().getTime()}` 
+                                    : `${vendor.profileImage}?t=${new Date().getTime()}` 
+                            }} 
+                            style={styles.vendorAvatar} 
+                        />
                     ) : (
                         <View style={styles.vendorAvatar}>
                             <Feather name="user" size={20} color={COLORS.primary} />

@@ -11,6 +11,7 @@ import {
     TextInput,
     Modal,
     RefreshControl,
+    Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -18,9 +19,10 @@ import { useAuth } from '../../context/AuthContext';
 import { usersAPI, authAPI } from '../../utils/api';
 import ToastMessage from '../../components/common/ToastMessage';
 import theme from '../../styles/theme';
+import ChangePasswordModal from '../../components/ChangePasswordModal';
 
 export default function VendorTeamProfileScreen({ navigation }) {
-    const { user, updateUser, logout } = useAuth();
+    const { user, updateUser, syncUser, logout } = useAuth();
     const [loading, setLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [profileImage, setProfileImage] = useState(user?.profileImage || null);
@@ -35,22 +37,8 @@ export default function VendorTeamProfileScreen({ navigation }) {
 
     // Toast state
     const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
-
-    const [passwordData, setPasswordData] = useState({
-        otp: '',
-        newPassword: '',
-        confirmPassword: '',
-    });
-
-    const [otpModalVisible, setOtpModalVisible] = useState(false);
-    const [otpLoading, setOtpLoading] = useState(false);
-
-    const [qrState, setQrState] = useState({
-        loading: false,
-        qrCodeDataUrl: '',
-        error: '',
-        otpVerified: false,
-    });
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -73,15 +61,87 @@ export default function VendorTeamProfileScreen({ navigation }) {
         setToast(prev => ({ ...prev, visible: false }));
     };
 
-    const pickImage = async () => {
+    const onRefresh = async () => {
+        setRefreshing(true);
         try {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            // Fetch latest user data from backend
+            const response = await authAPI.getProfile();
+            
+            if (response.success && response.data) {
+                const userData = response.data.user || response.data;
+                
+                // Add timestamp to profile image to bust cache globally
+                if (userData.profileImage) {
+                    const timestamp = new Date().getTime();
+                    userData.profileImage = userData.profileImage.includes('?') 
+                        ? `${userData.profileImage}&t=${timestamp}` 
+                        : `${userData.profileImage}?t=${timestamp}`;
+                }
+
+                if (syncUser) {
+                    await syncUser(userData);
+                }
+                setProfile({
+                    name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+                    email: userData.email,
+                    phone: userData.phone || 'Not provided',
+                    role: userData.role || 'employee',
+                    subRole: userData.subRole || 'vendorTeam',
+                });
+                setProfileImage(userData.profileImage || null);
+            }
+        } catch (error) {
+            console.error('Refresh error:', error);
+            showToast('Failed to refresh profile', 'error');
+        } finally {
+             setRefreshing(false);
+        }
+    };
+
+    const handleImagePicker = () => {
+        Alert.alert(
+            'Profile Photo Options',
+            'Choose how you want to update your profile photo',
+            [
+                {
+                    text: '📷 Take Photo',
+                    onPress: () => handleImageSelection('camera')
+                },
+                {
+                    text: '🖼️ Choose from Gallery',
+                    onPress: () => handleImageSelection('gallery')
+                },
+                ...(profileImage ? [{
+                    text: '🗑️ Remove Photo',
+                    onPress: () => deletePhoto(),
+                    style: 'destructive'
+                }] : []),
+                {
+                    text: 'Cancel',
+                    style: 'cancel'
+                }
+            ]
+        );
+    };
+
+    const handleImageSelection = async (type) => {
+        try {
+            const permissionMethod = type === 'camera' 
+                ? ImagePicker.requestCameraPermissionsAsync 
+                : ImagePicker.requestMediaLibraryPermissionsAsync;
+                
+            const { status } = await permissionMethod();
+            
             if (status !== 'granted') {
-                showToast('Please allow access to photos', 'error');
+                showToast(`Permission to access ${type} was denied`, 'error');
                 return;
             }
 
-            const result = await ImagePicker.launchImageLibraryAsync({
+            const launchMethod = type === 'camera'
+                ? ImagePicker.launchCameraAsync
+                : ImagePicker.launchImageLibraryAsync;
+
+            const result = await launchMethod({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
                 aspect: [1, 1],
@@ -92,8 +152,8 @@ export default function VendorTeamProfileScreen({ navigation }) {
                 await uploadProfilePhoto(result.assets[0].uri);
             }
         } catch (error) {
-            console.error('Image picker error:', error);
-            showToast('Failed to pick image', 'error');
+            console.error('Image selection error:', error);
+            showToast('Failed to select image', 'error');
         }
     };
 
@@ -103,21 +163,30 @@ export default function VendorTeamProfileScreen({ navigation }) {
             const formData = new FormData();
             const filename = imageUri.split('/').pop() || 'profile.jpg';
             const match = /\.(\w+)$/.exec(filename);
-            const type = match ? `image/${match[1]}` : 'image/jpeg';
+            const type = match ? `image/${match[1]}` : `image/jpeg`;
 
             if (Platform.OS === 'web') {
-                const response = await fetch(imageUri);
-                const blob = await response.blob();
-                formData.append('photo', blob, filename);
+                try {
+                    const response = await fetch(imageUri);
+                    const blob = await response.blob();
+                    formData.append('photo', blob, filename);
+                } catch (fetchError) {
+                    console.error('Error fetching image blob:', fetchError);
+                    formData.append('photo', { uri: imageUri, name: filename, type });
+                }
             } else {
                 formData.append('photo', { uri: imageUri, name: filename, type });
             }
 
             const uploadResponse = await usersAPI.uploadProfilePhoto(formData);
             if (uploadResponse.success) {
-                setProfileImage(uploadResponse.data.profileImage);
-                if (updateUser) {
-                    updateUser({ ...user, profileImage: uploadResponse.data.profileImage });
+                const timestamp = new Date().getTime();
+                const newImage = uploadResponse.data.profileImage;
+                const imageWithTimestamp = newImage.includes('?') ? `${newImage}&t=${timestamp}` : `${newImage}?t=${timestamp}`;
+
+                setProfileImage(imageWithTimestamp);
+                if (syncUser) {
+                    syncUser({ ...user, profileImage: imageWithTimestamp });
                 }
                 showToast('Profile photo updated!', 'success');
             } else {
@@ -137,8 +206,8 @@ export default function VendorTeamProfileScreen({ navigation }) {
             const response = await usersAPI.deleteProfilePhoto();
             if (response.success) {
                 setProfileImage(null);
-                if (updateUser) {
-                    updateUser({ ...user, profileImage: null });
+                if (syncUser) {
+                    syncUser({ ...user, profileImage: null });
                 }
                 showToast('Profile photo removed', 'success');
             } else {
@@ -150,98 +219,6 @@ export default function VendorTeamProfileScreen({ navigation }) {
         } finally {
             setIsSaving(false);
         }
-    };
-
-    const handleChangePassword = async () => {
-        try {
-            setQrState(prev => ({ ...prev, loading: true, error: '', qrCodeDataUrl: '', otpVerified: false }));
-            const response = await authAPI.getPasswordChangeQr();
-            if (response.success && response.data?.qrCodeDataUrl) {
-                setQrState({
-                    loading: false,
-                    qrCodeDataUrl: response.data.qrCodeDataUrl,
-                    error: '',
-                    otpVerified: false,
-                });
-                setPasswordData({ otp: '', newPassword: '', confirmPassword: '' });
-                setOtpModalVisible(true);
-            } else {
-                setQrState({
-                    loading: false,
-                    qrCodeDataUrl: '',
-                    error: response.message || 'Failed to generate QR code',
-                    otpVerified: false,
-                });
-                showToast(response.message || 'Failed to generate QR code', 'error');
-            }
-        } catch (error) {
-            setQrState({
-                loading: false,
-                qrCodeDataUrl: '',
-                error: error.message || 'Failed to generate QR code',
-                otpVerified: false,
-            });
-            showToast(error.message || 'Failed to generate QR code', 'error');
-        }
-    };
-
-    const handlePasswordChangeSubmit = async () => {
-        const { otp, newPassword, confirmPassword } = passwordData;
-
-        if (!otp || otp.length !== 6) {
-            showToast('Please enter the 6-digit OTP from Microsoft Authenticator', 'error');
-            return;
-        }
-        if (!newPassword || !confirmPassword) {
-            showToast('Please fill in all password fields', 'error');
-            return;
-        }
-        if (newPassword.length < 6) {
-            showToast('Password must be at least 6 characters', 'error');
-            return;
-        }
-        if (newPassword !== confirmPassword) {
-            showToast('Passwords do not match', 'error');
-            return;
-        }
-
-        try {
-            setOtpLoading(true);
-
-            // Step 1: Verify OTP
-            const verifyResponse = await authAPI.verifyPasswordChangeOtp(otp);
-            if (!verifyResponse.success) {
-                throw new Error(verifyResponse.message || 'Invalid OTP');
-            }
-
-            // Step 2: Change Password
-            const changeResponse = await authAPI.changePassword({
-                newPassword,
-            });
-
-            if (changeResponse.success) {
-                showToast('Password changed successfully!', 'success');
-                closeOtpModal();
-                setTimeout(() => logout(), 2000);
-            } else {
-                throw new Error(changeResponse.message || 'Failed to change password');
-            }
-        } catch (error) {
-            showToast(error.message || 'Failed to change password', 'error');
-        } finally {
-            setOtpLoading(false);
-        }
-    };
-
-    const closeOtpModal = () => {
-        setOtpModalVisible(false);
-        setPasswordData({ otp: '', newPassword: '', confirmPassword: '' });
-        setQrState({
-            loading: false,
-            qrCodeDataUrl: '',
-            error: '',
-            otpVerified: false,
-        });
     };
 
     const performLogout = async () => {
@@ -344,7 +321,7 @@ export default function VendorTeamProfileScreen({ navigation }) {
 
                 {/* Account Section */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Account</Text>
+                    <Text style={styles.sectionTitlhandleccouePicknrt</Text>
                     <View style={styles.menuContainer}>
                         <MenuItem
                             icon="user"
@@ -361,15 +338,10 @@ export default function VendorTeamProfileScreen({ navigation }) {
                     </View>
                 </View>
 
-                {/* Security Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Security</Text>
-                    <View style={styles.menuContainer}>
-                        <MenuItem
-                            icon="lock"
-                            title="Change Password"
+                {/* Securile={styles.secSe
+                <MenuI      title="Change Password"
                             subtitle="Update your password"
-                            onPress={handleChangePassword}
+                            onPress={() => setShowPasswordModal(true)}
                         />
                     </View>
                 </View>
@@ -409,87 +381,10 @@ export default function VendorTeamProfileScreen({ navigation }) {
                 <View style={{ height: 100 }} />
             </ScrollView>
 
-            {/* OTP Password Reset Modal */}
-            <Modal visible={otpModalVisible} transparent animationType="slide">
-                <View style={styles.modalOverlay}>
-                    <View style={styles.otpModal}>
-                        <View style={styles.otpHeader}>
-                            <Text style={styles.otpTitle}>Change Password</Text>
-                            <TouchableOpacity onPress={closeOtpModal} style={styles.closeButton}>
-                                <Feather name="x" size={24} color={theme.colors.text.muted} />
-                            </TouchableOpacity>
-                        </View>
-
-                        {qrState.loading ? (
-                            <View>
-                                <Text style={styles.otpLabel}>Generating QR code...</Text>
-                            </View>
-                        ) : (
-                            <>
-                                {qrState.qrCodeDataUrl ? (
-                                    <View>
-                                        <Text style={styles.otpLabel}>Scan this QR using Microsoft Authenticator</Text>
-                                        <Image
-                                            source={{ uri: qrState.qrCodeDataUrl }}
-                                            style={styles.qrImage}
-                                            resizeMode="contain"
-                                        />
-                                    </View>
-                                ) : null}
-
-                                <View>
-                                    <Text style={styles.otpLabel}>OTP (6-digit)</Text>
-                                    <TextInput
-                                        style={[styles.otpInput, { letterSpacing: 8, textAlign: 'center', fontSize: 20 }]}
-                                        value={passwordData.otp}
-                                        onChangeText={(val) => setPasswordData(prev => ({ ...prev, otp: val }))}
-                                        placeholder="000000"
-                                        keyboardType="number-pad"
-                                        maxLength={6}
-                                        placeholderTextColor={theme.colors.text.muted}
-                                    />
-                                </View>
-
-                                <View>
-                                    <Text style={styles.otpLabel}>Enter your new password</Text>
-                                    <TextInput
-                                        style={styles.otpInput}
-                                        value={passwordData.newPassword}
-                                        onChangeText={(val) => setPasswordData(prev => ({ ...prev, newPassword: val }))}
-                                        placeholder="New Password"
-                                        secureTextEntry
-                                        placeholderTextColor={theme.colors.text.muted}
-                                    />
-                                    <TextInput
-                                        style={[styles.otpInput, { marginTop: 12 }]}
-                                        value={passwordData.confirmPassword}
-                                        onChangeText={(val) => setPasswordData(prev => ({ ...prev, confirmPassword: val }))}
-                                        placeholder="Confirm Password"
-                                        secureTextEntry
-                                        placeholderTextColor={theme.colors.text.muted}
-                                    />
-                                    <TouchableOpacity 
-                                        style={[
-                                            styles.otpButton,
-                                            (otpLoading || 
-                                             !passwordData.otp || 
-                                             passwordData.otp.length !== 6 || 
-                                             !passwordData.newPassword || 
-                                             !passwordData.confirmPassword ||
-                                             passwordData.newPassword !== passwordData.confirmPassword
-                                            ) && { opacity: 0.6 }
-                                        ]} 
-                                        onPress={handlePasswordChangeSubmit} 
-                                        disabled={otpLoading || !passwordData.otp || passwordData.otp.length !== 6 || !passwordData.newPassword || !passwordData.confirmPassword || passwordData.newPassword !== passwordData.confirmPassword}
-                                    >
-                                        {otpLoading ? <ActivityIndicator color={theme.colors.text.white} /> : <Text style={styles.otpButtonText}>Change Password</Text>}
-                                    </TouchableOpacity>
-                                </View>
-                            </>
-                        )}
-                    </View>
-                </View>
-            </Modal>
+            <ChangePasswordModal 
+                visible={showPasswordModal} 
+                onClose={() => setShowPasswordModal(false)} 
+            />
         </View>
     );
 }
@@ -611,6 +506,76 @@ const styles = StyleSheet.create({
     menuContent: { flex: 1 },
     menuTitle: { fontSize: 16, fontWeight: '500', color: theme.colors.text.primary, marginBottom: 2 },
     menuSubtitle: { fontSize: 13, color: theme.colors.text.secondary },
+    dangerText: { color: theme.colors.error[600] },
+    // OTP Modal
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+    otpModal: { backgroundColor: theme.colors.background.card, marginHorizontal: 24, borderRadius: 20, padding: 24, width: '90%', maxWidth: 400 },
+    otpHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+    otpTitle: { fontSize: 20, fontWeight: '700', color: theme.colors.text.primary },
+    closeButton: { padding: 4 },
+    otpLabel: { fontSize: 14, color: theme.colors.text.secondary, marginBottom: 12 },
+    otpInput: {
+        backgroundColor: theme.colors.background.tertiary,
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        fontSize: 16,
+        color: theme.colors.text.primary,
+        borderWidth: 1,
+        borderColor: theme.colors.primary[100],
+    },
+    otpButton: {
+        backgroundColor: theme.colors.primary[600],
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+        marginTop: 16,
+    },
+    otpButtonText: { fontSize: 16, fontWeight: '600', color: theme.colors.text.white },
+    resendLink: { alignItems: 'center', marginTop: 16 },
+    resendText: { fontSize: 14, color: theme.colors.primary[600], fontWeight: '500' },
+    qrImage: {
+        width: 200,
+        height: 200,
+        alignSelf: 'center',
+        marginVertical: 12,
+    },, color: theme.colors.text.secondary },
+    dangerText: { color: theme.colors.error[600] },
+    // OTP Modal
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+    otpModal: { backgroundColor: theme.colors.background.card, marginHorizontal: 24, borderRadius: 20, padding: 24, width: '90%', maxWidth: 400 },
+    otpHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+    otpTitle: { fontSize: 20, fontWeight: '700', color: theme.colors.text.primary },
+    closeButton: { padding: 4 },
+    otpLabel: { fontSize: 14,marginBottom: 12 ,
+    otpInput: {
+        backgroundColor: theme.colors.background.tertiary
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        fontSize: 16,
+        color: theme.colors.text.primary,
+        borderWidth: 1,
+        borderColor: theme.colors.primary[100],
+    },
+    otpButton: {
+        backgroundColor: theme.colors.primary[600],
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+        marginTop: 16,
+    },
+    otpButtonText: { fontSize: 16, fontWeight: '600', color: theme.colors.text.white },
+    resendLink: { alignItems: 'center', marginTop: 16 },
+    resendText: { fontSize: 14, color: theme.colors.primary[600], fontWeight: '500' },
+    qrImage: {
+        width: 200,
+        height: 200,
+        alignSelf: 'center',
+        marginVertical: 12,
+    },
+});
+});
     dangerText: { color: theme.colors.error[600] },
     // OTP Modal
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },

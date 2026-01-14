@@ -3,8 +3,10 @@ import { View, ScrollView, Text, TouchableOpacity, Modal, Linking, Alert, Activi
 import AppHeader from '../components/AppHeader';
 import theme from '../../../styles/theme';
 import { vendorInvoicesAPI, purchaseOrdersAPI } from '../../../utils/api';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function PaymentsInvoices({ navigation }) {
+  const { user } = useAuth();
   const [invoices, setInvoices] = useState([]);
   const [orders, setOrders] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -60,7 +62,12 @@ export default function PaymentsInvoices({ navigation }) {
 
   return (
     <View style={{ flex:1, backgroundColor: theme.colors.background?.primary || '#F8F9FA' }}>
-      <AppHeader title="Payments & Invoices" onMenu={() => navigation.openDrawer()} />
+      <AppHeader 
+        title="Payments & Invoices" 
+        onMenu={() => navigation.openDrawer()} 
+        user={user}
+        onProfile={() => navigation.navigate('VendorProfile')}
+      />
       
       {/* Tab Selector */}
       <View style={{ flexDirection: 'row', backgroundColor: theme.colors.background?.secondary || '#fff', borderBottomWidth: 1, borderBottomColor: theme.colors.border?.light || '#E5E7EB' }}>

@@ -7,8 +7,10 @@ import MaterialCard from '../components/MaterialCard';
 import theme from '../../../styles/theme';
 import { materialRequestsAPI, quotationsAPI } from '../../../utils/api';
 import { getSocketBaseUrl } from '../../../utils/network';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function MaterialRequests({ navigation, route }) {
+  const { user } = useAuth();
   const [myRequests, setMyRequests] = useState([]);
   const [approvedQuotations, setApprovedQuotations] = useState([]);
   const [activeTab, setActiveTab] = useState(() => {
@@ -420,9 +422,14 @@ Status: ${request.status || 'pending'}`;
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <AppHeader title="Material Requests" onMenu={() => navigation.openDrawer()} />
-        <View style={styles.loadingContainer}>
+    <View style={styles.container}>
+      <AppHeader 
+        title="Material Requests" 
+        onMenu={() => navigation.openDrawer()} 
+        user={user}
+        onProfile={() => navigation.navigate('VendorProfile')}
+      />
+      <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>Loading material requests...</Text>
         </View>
@@ -432,7 +439,12 @@ Status: ${request.status || 'pending'}`;
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Material Requests" onMenu={() => navigation.openDrawer()} />
+      <AppHeader 
+        title="Material Requests" 
+        onMenu={() => navigation.openDrawer()} 
+        user={user}
+        onProfile={() => navigation.navigate('VendorProfile')}
+      />
       
       {/* Real-time connection indicator - only show when disconnected */}
       {!socketConnected && (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,20 +19,13 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI, usersAPI } from '../../utils/api';
+import ChangePasswordModal from '../../components/ChangePasswordModal';
 
 const OwnerProfileScreen = ({ navigation }) => {
-  const { user, updateUser, logout } = useAuth();
+  const { user, updateUser, syncUser, logout } = useAuth();
   
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [passwordData, setPasswordData] = useState({ otp: '', newPassword: '', confirmPassword: '' });
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [qrState, setQrState] = useState({
-    loading: false,
-    qrCodeDataUrl: '',
-    error: '',
-    otpVerified: false,
-  });
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -50,11 +43,15 @@ const OwnerProfileScreen = ({ navigation }) => {
       if (response.success) {
         const userData = response.data.user;
         const timestamp = new Date().getTime();
-        const profileImageUrl = userData.profileImage ? 
-          (userData.profileImage.includes('?') ? `${userData.profileImage}&t=${timestamp}` : `${userData.profileImage}?t=${timestamp}`) 
-          : null;
         
-        setProfileImage(profileImageUrl);
+        // Add timestamp to profile image to bust cache globally
+        if (userData.profileImage) {
+            userData.profileImage = userData.profileImage.includes('?') 
+                ? `${userData.profileImage}&t=${timestamp}` 
+                : `${userData.profileImage}?t=${timestamp}`;
+        }
+
+        setProfileImage(userData.profileImage || null);
         setFormData({
           firstName: userData.firstName || '',
           lastName: userData.lastName || '',
@@ -62,10 +59,9 @@ const OwnerProfileScreen = ({ navigation }) => {
           phone: userData.phone || '',
         });
         
-        if (user.profileImage !== userData.profileImage || 
-            user.firstName !== userData.firstName || 
-            user.lastName !== userData.lastName) {
-            updateUser(userData);
+        // Sync global state if needed (or always to keep timestamp fresh)
+        if (syncUser) {
+           syncUser(userData);
         }
       }
     } catch (error) {
@@ -122,20 +118,59 @@ const OwnerProfileScreen = ({ navigation }) => {
     setIsEditing(false);
   };
 
-  const pickImage = async () => {
+  const handleImagePicker = () => {
+    Alert.alert(
+      'Profile Photo Options',
+      'Choose how you want to update your profile photo',
+      [
+        {
+          text: '📷 Take Photo',
+          onPress: () => handleImageSelection('camera')
+        },
+        {
+          text: '🖼️ Choose from Gallery',
+          onPress: () => handleImageSelection('gallery')
+        },
+        ...(profileImage ? [{
+          text: '🗑️ Remove Photo',
+          onPress: () => deletePhoto(),
+          style: 'destructive'
+        }] : []),
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        }
+      ]
+    );
+  };
+
+  const handleImageSelection = async (source) => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } = source === 'camera' 
+        ? await ImagePicker.requestCameraPermissionsAsync()
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Please allow access to photos');
+        Alert.alert('Permission Required', `Please allow access to ${source}`);
         return;
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
+      let result;
+      if (source === 'camera') {
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+        });
+      } else {
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+        });
+      }
 
       if (!result.canceled && result.assets[0]) {
         await uploadProfilePhoto(result.assets[0].uri);
@@ -162,9 +197,13 @@ const OwnerProfileScreen = ({ navigation }) => {
 
       const uploadResponse = await usersAPI.uploadProfilePhoto(formDataUpload);
       if (uploadResponse.success) {
-        setProfileImage(uploadResponse.data.profileImage);
-        if (updateUser && user) {
-          await updateUser({ ...user, profileImage: uploadResponse.data.profileImage });
+        const timestamp = new Date().getTime();
+        const newImage = uploadResponse.data.profileImage;
+        const imageWithTimestamp = newImage.includes('?') ? `${newImage}&t=${timestamp}` : `${newImage}?t=${timestamp}`;
+
+        setProfileImage(imageWithTimestamp);
+        if (syncUser && user) {
+          await syncUser({ ...user, profileImage: imageWithTimestamp });
         }
         Alert.alert('Success', 'Profile photo updated successfully');
       } else {
@@ -180,8 +219,8 @@ const OwnerProfileScreen = ({ navigation }) => {
       const response = await usersAPI.deleteProfilePhoto();
       if (response.success) {
         setProfileImage(null);
-        if (updateUser && user) {
-          await updateUser({ ...user, profileImage: null });
+        if (syncUser && user) {
+          await syncUser({ ...user, profileImage: null });
         }
         Alert.alert('Success', 'Profile photo removed successfully');
       } else {
@@ -189,92 +228,6 @@ const OwnerProfileScreen = ({ navigation }) => {
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to delete profile photo');
-    }
-  };
-
-  const startPasswordChange = async () => {
-    try {
-      setQrState(prev => ({ ...prev, loading: true, error: '', qrCodeDataUrl: '', otpVerified: false }));
-      const response = await authAPI.getPasswordChangeQr();
-      if (response.success && response.data?.qrCodeDataUrl) {
-        setQrState({
-          loading: false,
-          qrCodeDataUrl: response.data.qrCodeDataUrl,
-          error: '',
-          otpVerified: false,
-        });
-        setPasswordData({ otp: '', newPassword: '', confirmPassword: '' });
-        setShowPasswordModal(true);
-      } else {
-        setQrState({
-          loading: false,
-          qrCodeDataUrl: '',
-          error: response.message || 'Failed to generate QR code',
-          otpVerified: false,
-        });
-        Alert.alert('Error', response.message || 'Failed to generate QR code');
-      }
-    } catch (error) {
-      setQrState({
-        loading: false,
-        qrCodeDataUrl: '',
-        error: error.message || 'Failed to generate QR code',
-        otpVerified: false,
-      });
-      Alert.alert('Error', error.message || 'Failed to generate QR code');
-    }
-  };
-
-  const handleChangePassword = async () => {
-    if (!passwordData.otp || passwordData.otp.length !== 6) {
-      Alert.alert('Error', 'Please enter the 6-digit OTP from Microsoft Authenticator');
-      return;
-    }
-    if (!passwordData.newPassword || !passwordData.confirmPassword) {
-      Alert.alert('Error', 'Please fill in all password fields');
-      return;
-    }
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match');
-      return;
-    }
-    if (passwordData.newPassword.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
-      return;
-    }
-
-    try {
-      setIsChangingPassword(true);
-      
-      // Step 1: Verify OTP
-      const verifyResponse = await authAPI.verifyPasswordChangeOtp(passwordData.otp);
-      if (!verifyResponse.success) {
-        throw new Error(verifyResponse.message || 'Invalid OTP');
-      }
-
-      // Step 2: Change Password
-      const changeResponse = await authAPI.changePassword({
-        newPassword: passwordData.newPassword,
-      });
-      
-      if (changeResponse.success) {
-        Alert.alert('Success', 'Password changed successfully');
-        setShowPasswordModal(false);
-        setPasswordData({ otp: '', newPassword: '', confirmPassword: '' });
-        setQrState({
-          loading: false,
-          qrCodeDataUrl: '',
-          error: '',
-          otpVerified: false,
-        });
-      } else {
-        throw new Error(changeResponse.message || 'Failed to change password');
-      }
-    } catch (error) {
-      console.error('Change password error:', error);
-      Alert.alert('Error', error.message || error.response?.data?.message || 'Failed to change password');
-    } finally {
-      setIsChangingPassword(false);
     }
   };
 
@@ -357,7 +310,7 @@ const OwnerProfileScreen = ({ navigation }) => {
                 <Text style={styles.avatarText}>{getInitials()}</Text>
               )}
             </View>
-            <TouchableOpacity style={styles.cameraButton} onPress={pickImage}>
+            <TouchableOpacity style={styles.cameraButton} onPress={handleImagePicker}>
               <Ionicons name="camera" size={16} color="#FFFFFF" />
             </TouchableOpacity>
             {profileImage && (
@@ -432,7 +385,7 @@ const OwnerProfileScreen = ({ navigation }) => {
           
           <TouchableOpacity 
             style={styles.actionItem}
-            onPress={startPasswordChange}
+            onPress={() => setShowPasswordModal(true)}
           >
             <View style={styles.actionLeft}>
               <Ionicons name="lock-closed-outline" size={20} color="#6B7280" />
@@ -541,117 +494,10 @@ const OwnerProfileScreen = ({ navigation }) => {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* Password Change Modal */}
-      <Modal
-        visible={showPasswordModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowPasswordModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Change Password</Text>
-              <TouchableOpacity onPress={() => setShowPasswordModal(false)}>
-                <Ionicons name="close" size={24} color="#6B7280" />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.modalBody}>
-              {qrState.loading ? (
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Generating QR code...</Text>
-                </View>
-              ) : (
-                <>
-                  {qrState.qrCodeDataUrl ? (
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.label}>Scan this QR using Microsoft Authenticator</Text>
-                      <Image
-                        source={{ uri: qrState.qrCodeDataUrl }}
-                        style={styles.qrImage}
-                        resizeMode="contain"
-                      />
-                    </View>
-                  ) : null}
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.label}>OTP (6-digit)</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={passwordData.otp}
-                      onChangeText={(text) => setPasswordData({ ...passwordData, otp: text })}
-                      placeholder="123456"
-                      keyboardType="number-pad"
-                      maxLength={6}
-                      secureTextEntry={false}
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.label}>New Password</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={passwordData.newPassword}
-                      onChangeText={(text) => setPasswordData({ ...passwordData, newPassword: text })}
-                      placeholder="Enter new password"
-                      secureTextEntry
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Confirm New Password</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={passwordData.confirmPassword}
-                      onChangeText={(text) => setPasswordData({ ...passwordData, confirmPassword: text })}
-                      placeholder="Confirm new password"
-                      secureTextEntry
-                    />
-                  </View>
-                </>
-              )}
-            </View>
-
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.modalCancelButton}
-                onPress={() => {
-                  setShowPasswordModal(false);
-                  setPasswordData({ otp: '', newPassword: '', confirmPassword: '' });
-                  setQrState({
-                    loading: false,
-                    qrCodeDataUrl: '',
-                    error: '',
-                    otpVerified: false,
-                  });
-                }}
-              >
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.modalSaveButton, 
-                  (isChangingPassword || 
-                   !passwordData.otp || 
-                   passwordData.otp.length !== 6 || 
-                   !passwordData.newPassword || 
-                   !passwordData.confirmPassword ||
-                   passwordData.newPassword !== passwordData.confirmPassword) && styles.buttonDisabled
-                ]}
-                onPress={handleChangePassword}
-                disabled={isChangingPassword || !passwordData.otp || passwordData.otp.length !== 6 || !passwordData.newPassword || !passwordData.confirmPassword || passwordData.newPassword !== passwordData.confirmPassword}
-              >
-                {isChangingPassword ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.modalSaveText}>Change Password</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <ChangePasswordModal 
+        visible={showPasswordModal} 
+        onClose={() => setShowPasswordModal(false)} 
+      />
     </SafeAreaView>
   );
 };
@@ -881,78 +727,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
     marginTop: 2,
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    width: '100%',
-    maxWidth: 400,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  modalBody: {
-    padding: 16,
-  },
-  modalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    padding: 16,
-    gap: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-  modalCancelButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-  },
-  modalCancelText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6B7280',
-  },
-  modalSaveButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#FFC107',
-    minWidth: 120,
-    alignItems: 'center',
-  },
-  modalSaveText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  qrImage: {
-    width: 200,
-    height: 200,
-    alignSelf: 'center',
-    marginVertical: 12,
   },
 });
 

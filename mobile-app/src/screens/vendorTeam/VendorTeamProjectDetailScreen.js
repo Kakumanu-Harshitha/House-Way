@@ -662,11 +662,30 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
             >
                 {/* Header */}
                 <LinearGradient colors={[theme.colors.primary[500], theme.colors.primary[700]]} style={styles.header}>
-                    <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-                        <Feather name="arrow-left" size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <Text style={styles.projectTitle}>{project?.title || 'Project'}</Text>
-                    <Text style={styles.projectSubtitle}>Vendor Team View</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+                            <Feather name="arrow-left" size={24} color="#FFFFFF" />
+                        </TouchableOpacity>
+                        <View style={{ flex: 1, alignItems: 'center' }}>
+                            <Text style={styles.projectTitle}>{project?.title || 'Project'}</Text>
+                            <Text style={styles.projectSubtitle}>Vendor Team View</Text>
+                        </View>
+                        <TouchableOpacity 
+                            style={{ padding: 8 }}
+                            onPress={() => navigation.navigate('VendorTeamProfile')}
+                        >
+                            {user?.profileImage ? (
+                                <Image 
+                                    source={{ uri: user.profileImage }} 
+                                    style={{ width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' }} 
+                                />
+                            ) : (
+                                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                                    <Feather name="user" size={16} color="#FFFFFF" />
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    </View>
                 </LinearGradient>
 
                 {/* Tabs */}

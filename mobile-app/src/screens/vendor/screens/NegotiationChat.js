@@ -189,6 +189,25 @@ export default function NegotiationChat({ route, navigation }) {
     );
   }
 
+  const renderProfileImage = () => {
+    if (user?.profileImage) {
+      return (
+        <Image
+          source={{ uri: user.profileImage }}
+          style={styles.profileImage}
+          resizeMode="cover"
+        />
+      );
+    }
+    return (
+      <View style={styles.avatarPlaceholder}>
+        <Text style={styles.avatarText}>
+          {user?.firstName?.[0] || user?.name?.[0] || 'U'}
+        </Text>
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
       {/* Custom Header with Back Button and Centered Title */}
@@ -214,16 +233,26 @@ export default function NegotiationChat({ route, navigation }) {
           </Text>
         </View>
         
-        <TouchableOpacity 
-          style={styles.infoButton}
-          onPress={() => Alert.alert(
-            'Order Info', 
-            `Status: ${order?.status || 'N/A'}\nPO#: ${order?.purchaseOrderNumber || 'N/A'}\nItems: ${order?.items?.length || 0}`
-          )}
-          activeOpacity={0.7}
-        >
-          <Feather name="info" size={20} color={theme.colors.text.muted} />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity 
+            style={styles.infoButton}
+            onPress={() => Alert.alert(
+              'Order Info', 
+              `Status: ${order?.status || 'N/A'}\nPO#: ${order?.purchaseOrderNumber || 'N/A'}\nItems: ${order?.items?.length || 0}`
+            )}
+            activeOpacity={0.7}
+          >
+            <Feather name="info" size={20} color={theme.colors.text.muted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.profileButton}
+            onPress={() => navigation.navigate('VendorProfile')}
+            activeOpacity={0.7}
+          >
+            {renderProfileImage()}
+          </TouchableOpacity>
+        </View>
       </View>
       
       {/* Messages List */}
@@ -1026,5 +1055,35 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#fff',
     fontWeight: '600',
+  },
+  profileImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+  },
+  avatarPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.primary[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.primary[200],
+  },
+  avatarText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.primary[700],
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileButton: {
+    marginLeft: 12,
+    padding: 4,
   },
 });

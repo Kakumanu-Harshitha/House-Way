@@ -9,6 +9,7 @@ import {
   Alert,
   Modal,
   Animated,
+  Image,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import theme from '../styles/theme';
@@ -195,15 +196,31 @@ const AdminNavbar = ({
                   styles.avatar,
                   {
                     backgroundColor:
-                      effectiveTextColor === '#ffffff'
+                      user?.profileImage ? 'transparent' : (effectiveTextColor === '#ffffff'
                         ? 'rgba(255,255,255,0.3)'
-                        : 'rgba(0,0,0,0.1)',
+                        : 'rgba(0,0,0,0.1)'),
+                    overflow: 'hidden'
                   },
                 ]}
               >
-                <Text style={[styles.avatarText, { color: effectiveTextColor }]}>
-                  {getInitials()}
-                </Text>
+                {user?.profileImage ? (
+                  <Image
+                    source={{ 
+                      uri: user.profileImage.includes('?') 
+                        ? `${user.profileImage}&t=${new Date().getTime()}` 
+                        : `${user.profileImage}?t=${new Date().getTime()}` 
+                    }}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                    }}
+                  />
+                ) : (
+                  <Text style={[styles.avatarText, { color: effectiveTextColor }]}>
+                    {getInitials()}
+                  </Text>
+                )}
                 {unreadCount > 0 && (
                   <View style={styles.unreadBadge}>
                     <Text style={styles.unreadText} numberOfLines={1}>
@@ -268,14 +285,30 @@ const AdminNavbar = ({
           >
             {/* Menu Header */}
             <View style={styles.menuHeader}>
-              <View
-                style={[
-                  styles.menuAvatar,
-                  { backgroundColor: backgroundColor },
-                ]}
-              >
-                <Text style={styles.menuAvatarText}>{getInitials()}</Text>
-              </View>
+              {user?.profileImage ? (
+                <Image
+                  source={{ 
+                    uri: user.profileImage.includes('?') 
+                      ? `${user.profileImage}&t=${new Date().getTime()}` 
+                      : `${user.profileImage}?t=${new Date().getTime()}` 
+                  }}
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 25,
+                    marginRight: 12
+                  }}
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.menuAvatar,
+                    { backgroundColor: backgroundColor },
+                  ]}
+                >
+                  <Text style={styles.menuAvatarText}>{getInitials()}</Text>
+                </View>
+              )}
               <View style={{ flex: 1 }}>
                 <Text style={styles.menuUserName}>
                   {user?.firstName} {user?.lastName}

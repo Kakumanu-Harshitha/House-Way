@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 // Import auth screens
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import GuestScreen from '../screens/guest/GuestScreen';
 
 const Stack = createStackNavigator();
@@ -27,6 +28,14 @@ const AuthNavigator = () => {
         component={LoginScreen}
         options={{
           title: 'Houseway Login',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="ForgotPassword"
+        component={ForgotPasswordScreen}
+        options={{
+          title: 'Reset Password',
           headerShown: false,
         }}
       />

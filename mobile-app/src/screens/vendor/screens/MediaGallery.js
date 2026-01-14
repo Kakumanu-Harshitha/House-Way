@@ -3,8 +3,10 @@ import { View, ScrollView, Image, Text, TouchableOpacity, Alert } from 'react-na
 import AppHeader from '../components/AppHeader';
 import theme from '../../../styles/theme';
 import { filesAPI } from '../../../utils/api';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function MediaGallery({ navigation }) {
+  const { user } = useAuth();
   const [mediaItems, setMediaItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,7 +46,12 @@ export default function MediaGallery({ navigation }) {
 
   return (
     <View style={{ flex:1, backgroundColor: theme.colors.background }}>
-      <AppHeader title="Media Gallery" onMenu={() => navigation.openDrawer()} />
+      <AppHeader 
+        title="Media Gallery" 
+        onMenu={() => navigation.openDrawer()} 
+        user={user}
+        onProfile={() => navigation.navigate('VendorProfile')}
+      />
       <ScrollView contentContainerStyle={{ padding: 18 }}>
         <Text style={{ fontSize: 16, fontWeight: '700', marginBottom: 12 }}>Milestone Highlights</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>

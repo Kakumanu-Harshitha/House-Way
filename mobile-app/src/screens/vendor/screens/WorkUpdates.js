@@ -4,8 +4,10 @@ import { Feather } from '@expo/vector-icons';
 import AppHeader from '../components/AppHeader';
 import theme from '../../../styles/theme';
 import { quotationsAPI } from '../../../utils/api';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function WorkUpdates({ navigation }) {
+  const { user } = useAuth();
   const [approvedQuotations, setApprovedQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,7 +46,12 @@ export default function WorkUpdates({ navigation }) {
   if (loading) {
     return (
       <View style={styles.container}>
-        <AppHeader title="Work Updates" onMenu={() => navigation.openDrawer()} />
+        <AppHeader 
+          title="Work Updates" 
+          onMenu={() => navigation.openDrawer()} 
+          user={user}
+          onProfile={() => navigation.navigate('VendorProfile')}
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>Loading approved quotations...</Text>
@@ -55,7 +62,12 @@ export default function WorkUpdates({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Work Updates" onMenu={() => navigation.openDrawer()} />
+      <AppHeader 
+        title="Work Updates" 
+        onMenu={() => navigation.openDrawer()} 
+        user={user}
+        onProfile={() => navigation.navigate('VendorProfile')}
+      />
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {approvedQuotations.map(quotation => (

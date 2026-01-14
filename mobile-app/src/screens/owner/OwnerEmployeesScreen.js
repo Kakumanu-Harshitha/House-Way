@@ -12,7 +12,8 @@ import {
     Linking,
     TextInput,
     Alert,
-    RefreshControl
+    RefreshControl,
+    Image
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';

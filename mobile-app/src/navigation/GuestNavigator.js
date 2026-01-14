@@ -5,6 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import GuestScreen from '../screens/guest/GuestScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 
 const Stack = createStackNavigator();
 
@@ -40,6 +41,14 @@ const GuestNavigator = () => {
         name="Login" 
         component={LoginScreen} 
         options={{ title: 'Login' }} 
+      />
+      <Stack.Screen
+        name="ForgotPassword"
+        component={ForgotPasswordScreen}
+        options={{
+          title: 'Reset Password',
+          headerShown: false,
+        }}
       />
       <Stack.Screen 
         name="Register" 

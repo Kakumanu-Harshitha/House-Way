@@ -27,6 +27,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { purchaseOrdersAPI } from '../../utils/api';
 import DeliveryCard from '../../components/common/DeliveryCard';
 import { useAuth } from '../../context/AuthContext';
+import AppHeader from './components/AppHeader';
 import socket from '../../utils/socket';
 
 // Array version for vendor status selector modal
@@ -268,13 +269,12 @@ const VendorDeliveryScreen = ({ navigation, route }) => {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#111827" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Delivery Tracking</Text>
-          <View style={{ width: 24 }} />
-        </View>
+        <AppHeader 
+          title="Delivery Tracking" 
+          onBack={() => navigation.goBack()} 
+          user={user}
+          onProfile={() => navigation.navigate('VendorProfile')}
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3B82F6" />
           <Text style={styles.loadingText}>Loading orders...</Text>
@@ -285,18 +285,12 @@ const VendorDeliveryScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#111827" />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Delivery Tracking</Text>
-          <Text style={styles.headerSubtitle}>{orders.length} active {orders.length === 1 ? 'order' : 'orders'}</Text>
-        </View>
-        <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
-          <Ionicons name="refresh" size={24} color="#111827" />
-        </TouchableOpacity>
-      </View>
+      <AppHeader 
+        title="Delivery Status" 
+        onMenu={() => navigation.openDrawer()} 
+        user={user}
+        onProfile={() => navigation.navigate('VendorProfile')}
+      />
 
       {orders.length === 0 ? (
         <View style={styles.emptyContainer}>

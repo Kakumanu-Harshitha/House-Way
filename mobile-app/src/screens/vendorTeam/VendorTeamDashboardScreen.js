@@ -107,12 +107,30 @@ const VendorTeamDashboardScreen = ({ navigation }) => {
                         </Text>
                         <Text style={styles.roleText}>Vendor Employee</Text>
                     </View>
-                    <TouchableOpacity
-                        style={styles.backButton}
-                        onPress={() => navigation.goBack()}
-                    >
-                        <Feather name="arrow-left" size={24} color={theme.colors.text.primary} />
-                    </TouchableOpacity>
+                    
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <TouchableOpacity onPress={() => navigation.navigate('VendorTeamProfile')}>
+                            {user?.profileImage ? (
+                                <Image 
+                                    source={{ uri: user.profileImage }} 
+                                    style={styles.headerAvatar} 
+                                />
+                            ) : (
+                                <View style={styles.headerAvatarPlaceholder}>
+                                    <Text style={styles.headerAvatarText}>
+                                        {user?.firstName?.[0] || 'V'}
+                                    </Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.backButton, { marginLeft: 12 }]}
+                            onPress={() => navigation.goBack()}
+                        >
+                            <Feather name="arrow-left" size={24} color={theme.colors.text.primary} />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Stats Cards */}
@@ -243,6 +261,24 @@ const styles = StyleSheet.create({
     },
     backButton: {
         padding: 8,
+    },
+    headerAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+    },
+    headerAvatarPlaceholder: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: theme.colors.primary[600],
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    headerAvatarText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#fff',
     },
     statsContainer: {
         flexDirection: 'row',

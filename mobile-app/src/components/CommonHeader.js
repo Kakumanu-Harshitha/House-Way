@@ -31,6 +31,22 @@ const CommonHeader = ({ title, userRole, showNotifications = true }) => {
       .substring(0, 2);
   };
 
+  const renderProfileImage = (size = 'small') => {
+    if (user?.profileImage) {
+      const imageUrl = user.profileImage.includes('?') 
+        ? `${user.profileImage}&t=${new Date().getTime()}` 
+        : `${user.profileImage}?t=${new Date().getTime()}`;
+      return (
+        <Image
+          source={{ uri: imageUrl }}
+          style={size === 'large' ? styles.largeProfileImage : styles.profileImage}
+          resizeMode="cover"
+        />
+      );
+    }
+    return <Text style={styles.initialsText}>{getUserInitials()}</Text>;
+  };
+
   const getRoleColor = () => {
     switch (userRole?.toLowerCase()) {
       case 'vendor':
@@ -139,7 +155,7 @@ const CommonHeader = ({ title, userRole, showNotifications = true }) => {
             <TouchableOpacity
               style={[
                 styles.profileButton,
-                { backgroundColor: getRoleColor() },
+                { backgroundColor: user?.profileImage ? 'transparent' : getRoleColor() },
               ]}
               onPress={() => {
                 // For employee users (designers), go straight to Settings.
@@ -150,7 +166,7 @@ const CommonHeader = ({ title, userRole, showNotifications = true }) => {
                 }
               }}
             >
-              <Text style={styles.initialsText}>{getUserInitials()}</Text>
+              {renderProfileImage('small')}
             </TouchableOpacity>
           </View>
         </View>
@@ -174,10 +190,22 @@ const CommonHeader = ({ title, userRole, showNotifications = true }) => {
               <View
                 style={[
                   styles.largeProfileButton,
-                  { backgroundColor: getRoleColor() },
+                  { backgroundColor: user?.profileImage ? 'transparent' : getRoleColor() },
                 ]}
               >
-                <Text style={styles.initialsText}>{getUserInitials()}</Text>
+                {user?.profileImage ? (
+                  <Image
+                    source={{ 
+                      uri: user.profileImage.includes('?') 
+                        ? `${user.profileImage}&t=${new Date().getTime()}` 
+                        : `${user.profileImage}?t=${new Date().getTime()}` 
+                    }}
+                    style={styles.largeProfileImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text style={styles.initialsText}>{getUserInitials()}</Text>
+                )}
               </View>
               <View style={styles.userDetails}>
                 <Text style={styles.userName}>{user?.name || 'User'}</Text>
@@ -314,6 +342,17 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  largeProfileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   initialsText: {
     color: 'white',
@@ -352,6 +391,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    overflow: 'hidden',
   },
   userDetails: {
     flex: 1,

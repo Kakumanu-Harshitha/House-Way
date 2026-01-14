@@ -160,11 +160,22 @@ const ClientsListScreen = ({ navigation }) => {
         activeOpacity={0.7}
       >
         <View style={styles.cardHeader}>
-          <View style={styles.avatarContainer}>
-            <Text style={styles.avatarText}>
-              {item.firstName?.charAt(0)}{item.lastName?.charAt(0)}
-            </Text>
-          </View>
+          {item.profileImage ? (
+            <Image 
+              source={{ 
+                uri: item.profileImage.includes('?') 
+                  ? `${item.profileImage}&t=${new Date().getTime()}` 
+                  : `${item.profileImage}?t=${new Date().getTime()}` 
+              }} 
+              style={styles.avatarImage} 
+            />
+          ) : (
+            <View style={styles.avatarContainer}>
+              <Text style={styles.avatarText}>
+                {item.firstName?.charAt(0)}{item.lastName?.charAt(0)}
+              </Text>
+            </View>
+          )}
           <View style={styles.clientInfo}>
             <Text style={styles.clientName}>{item.firstName} {item.lastName}</Text>
             {item.clientId && (

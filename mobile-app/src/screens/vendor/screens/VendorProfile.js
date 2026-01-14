@@ -18,9 +18,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../../context/AuthContext';
 import { authAPI, usersAPI } from '../../../utils/api';
 import theme from '../../../styles/theme';
+import ChangePasswordModal from '../../../components/ChangePasswordModal';
 
 export default function VendorProfile({ navigation }) {
-  const { user, logout, updateUser } = useAuth();
+  const { user, logout, updateUser, syncUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [vendor, setVendor] = useState({
@@ -33,14 +34,6 @@ export default function VendorProfile({ navigation }) {
 
   // Password Change State
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [passwordData, setPasswordData] = useState({ otp: '', newPassword: '', confirmPassword: '' });
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [qrState, setQrState] = useState({
-    loading: false,
-    qrCodeDataUrl: '',
-    error: '',
-    otpVerified: false,
-  });
 
   // Profile Photo State
   const [profileImage, setProfileImage] = useState(null);
@@ -66,8 +59,11 @@ export default function VendorProfile({ navigation }) {
             : null;
         setProfileImage(imageUri);
 
-        if (updateUser) {
-          await updateUser(userData);
+        if (syncUser) {
+          if (imageUri) {
+             userData.profileImage = imageUri;
+          }
+          await syncUser(userData);
         }
       }
     } catch (error) {
@@ -156,8 +152,8 @@ export default function VendorProfile({ navigation }) {
         const imageWithTimestamp = newImage.includes('?') ? `${newImage}&t=${timestamp}` : `${newImage}?t=${timestamp}`;
         
         setProfileImage(imageWithTimestamp);
-        if (updateUser && user) {
-          await updateUser({ ...user, profileImage: newImage });
+        if (syncUser && user) {
+          await syncUser({ ...user, profileImage: imageWithTimestamp });
         }
         Alert.alert('Success', 'Profile photo updated successfully');
       } else {
@@ -173,8 +169,8 @@ export default function VendorProfile({ navigation }) {
       const response = await usersAPI.deleteProfilePhoto();
       if (response.success) {
         setProfileImage(null);
-        if (updateUser && user) {
-          await updateUser({ ...user, profileImage: null });
+        if (syncUser && user) {
+          await syncUser({ ...user, profileImage: null });
         }
         Alert.alert('Success', 'Profile photo removed successfully');
       } else {
@@ -188,91 +184,7 @@ export default function VendorProfile({ navigation }) {
   // ---------------------------
   // 🔐 Password Change Logic
   // ---------------------------
-  const startPasswordChange = async () => {
-    try {
-      setQrState(prev => ({ ...prev, loading: true, error: '', qrCodeDataUrl: '', otpVerified: false }));
-      const response = await authAPI.getPasswordChangeQr();
-      if (response.success && response.data?.qrCodeDataUrl) {
-        setQrState({
-          loading: false,
-          qrCodeDataUrl: response.data.qrCodeDataUrl,
-          error: '',
-          otpVerified: false,
-        });
-        setPasswordData({ otp: '', newPassword: '', confirmPassword: '' });
-        setShowPasswordModal(true);
-      } else {
-        setQrState({
-          loading: false,
-          qrCodeDataUrl: '',
-          error: response.message || 'Failed to generate QR code',
-          otpVerified: false,
-        });
-        Alert.alert('Error', response.message || 'Failed to generate QR code');
-      }
-    } catch (error) {
-      setQrState({
-        loading: false,
-        qrCodeDataUrl: '',
-        error: error.message || 'Failed to generate QR code',
-        otpVerified: false,
-      });
-      Alert.alert('Error', error.message || 'Failed to generate QR code');
-    }
-  };
-
-  const handlePasswordReset = async () => {
-    if (!passwordData.otp || passwordData.otp.length !== 6) {
-      Alert.alert('Error', 'Please enter the 6-digit OTP from Microsoft Authenticator');
-      return;
-    }
-    if (!passwordData.newPassword || !passwordData.confirmPassword) {
-      Alert.alert('Error', 'Please fill in all password fields');
-      return;
-    }
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match');
-      return;
-    }
-    if (passwordData.newPassword.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
-      return;
-    }
-
-    try {
-      setIsChangingPassword(true);
-      
-      // Verify OTP first
-      const verifyResponse = await authAPI.verifyPasswordChangeOtp(passwordData.otp);
-      if (!verifyResponse.success) {
-        throw new Error(verifyResponse.message || 'Invalid OTP');
-      }
-
-      // Then change password
-      const changeResponse = await authAPI.changePassword({
-        newPassword: passwordData.newPassword,
-      });
-      
-      if (changeResponse.success) {
-        Alert.alert('Success', 'Password changed successfully');
-        setShowPasswordModal(false);
-        setPasswordData({ otp: '', newPassword: '', confirmPassword: '' });
-        setQrState({
-          loading: false,
-          qrCodeDataUrl: '',
-          error: '',
-          otpVerified: false,
-        });
-      } else {
-        throw new Error(changeResponse.message || 'Failed to change password');
-      }
-    } catch (error) {
-      console.error('Change password error:', error);
-      Alert.alert('Error', error.message || error.response?.data?.message || 'Failed to change password');
-    } finally {
-      setIsChangingPassword(false);
-    }
-  };
+  // Logic moved to ChangePasswordModal component
 
   const handleLogout = () => {
     if (Platform.OS === 'web') {
@@ -425,7 +337,7 @@ export default function VendorProfile({ navigation }) {
               icon="lock"
               title="Change Password"
               subtitle="Update your password"
-              onPress={startPasswordChange}
+              onPress={() => setShowPasswordModal(true)}
             />
           </View>
         </View>
@@ -471,95 +383,10 @@ export default function VendorProfile({ navigation }) {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* Password Change Modal */}
-      <Modal
-        visible={showPasswordModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowPasswordModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Change Password</Text>
-              <TouchableOpacity onPress={() => setShowPasswordModal(false)}>
-                <Ionicons name="close" size={24} color="#6B7280" />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.modalBody}>
-              {qrState.loading ? (
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Generating QR code...</Text>
-                </View>
-              ) : (
-                <>
-                  {qrState.qrCodeDataUrl ? (
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.label}>Scan this QR using Microsoft Authenticator</Text>
-                      <Image
-                        source={{ uri: qrState.qrCodeDataUrl }}
-                        style={styles.qrImage}
-                        resizeMode="contain"
-                      />
-                    </View>
-                  ) : null}
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.label}>OTP (6-digit)</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={passwordData.otp}
-                      onChangeText={(text) => setPasswordData({ ...passwordData, otp: text })}
-                      placeholder="123456"
-                      keyboardType="number-pad"
-                      maxLength={6}
-                      secureTextEntry={false}
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.label}>New Password</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={passwordData.newPassword}
-                      onChangeText={(text) => setPasswordData({ ...passwordData, newPassword: text })}
-                      placeholder="Enter new password"
-                      secureTextEntry
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Confirm Password</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={passwordData.confirmPassword}
-                      onChangeText={(text) => setPasswordData({ ...passwordData, confirmPassword: text })}
-                      placeholder="Confirm new password"
-                      secureTextEntry
-                    />
-                  </View>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.saveButton,
-                      (isChangingPassword || !passwordData.otp || passwordData.otp.length !== 6 || !passwordData.newPassword || !passwordData.confirmPassword || passwordData.newPassword !== passwordData.confirmPassword) && styles.saveButtonDisabled
-                    ]}
-                    onPress={handlePasswordReset}
-                    disabled={isChangingPassword || !passwordData.otp || passwordData.otp.length !== 6 || !passwordData.newPassword || !passwordData.confirmPassword || passwordData.newPassword !== passwordData.confirmPassword}
-                  >
-                    {isChangingPassword ? (
-                      <ActivityIndicator color="#FFFFFF" />
-                    ) : (
-                      <Text style={styles.saveButtonText}>Change Password</Text>
-                    )}
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <ChangePasswordModal 
+        visible={showPasswordModal} 
+        onClose={() => setShowPasswordModal(false)} 
+      />
     </View>
   );
 }

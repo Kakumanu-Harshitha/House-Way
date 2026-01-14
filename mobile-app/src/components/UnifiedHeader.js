@@ -6,6 +6,7 @@ import {
   StyleSheet,
   StatusBar,
   Platform,
+  Image,
 } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import theme from '../styles/theme';
@@ -26,12 +27,15 @@ export default function UnifiedHeader({
   onBack,
   onMenu,
   onLogout,
+  user,
   userInitials = 'U',
   subtitle,
   backgroundColor = theme.colors.primary[500],
 }) {
   const statusBarHeight = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
   const iconColor = theme.colors.text.white;
+
+  const displayInitials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}` : userInitials;
 
   return (
     <View style={[styles.header, { backgroundColor, paddingTop: statusBarHeight + 8 }]}>
@@ -69,11 +73,22 @@ export default function UnifiedHeader({
 
         {/* Right Section */}
         <View style={styles.rightSection}>
-          {onLogout && (
+          {(onLogout || user) && (
             <TouchableOpacity onPress={onLogout} style={styles.avatarButton}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{userInitials}</Text>
-              </View>
+              {user && user.profileImage ? (
+                <Image 
+                  source={{ 
+                    uri: user.profileImage.includes('?') 
+                      ? `${user.profileImage}&t=${new Date().getTime()}` 
+                      : `${user.profileImage}?t=${new Date().getTime()}` 
+                  }} 
+                  style={styles.avatarImage} 
+                />
+              ) : (
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{displayInitials}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           )}
         </View>
@@ -98,46 +113,54 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 20,
   },
   logoSection: {
     width: 40,
     height: 40,
     justifyContent: 'center',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   titleSection: {
     flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
+    marginHorizontal: 12,
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: theme.colors.text.white,
   },
   subtitle: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 2,
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   avatarButton: {
-    padding: 4,
+    marginLeft: 12,
   },
   avatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  avatarImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   avatarText: {
+    color: theme.colors.text.white,
     fontSize: 14,
     fontWeight: '600',
-    color: theme.colors.text.white,
   },
 });

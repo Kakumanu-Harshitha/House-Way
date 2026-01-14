@@ -232,6 +232,7 @@ const updateProfile = async (req, res) => {
       'vendorDetails',
       'clientDetails',
       'subRole', // ✅ allow updating subRole if needed
+      'profileImage', // ✅ allow updating profileImage
     ];
 
     const updates = {};
@@ -348,18 +349,17 @@ const createPasswordChangeTotp = async (req, res) => {
     let secretBase32 = user.passwordChangeTotpSecret;
     let otpauthUrl;
 
-    // Check if we can reuse the existing secret (valid for 15 mins)
-    const maxMinutesReuse = 15;
-    let shouldGenerateNew = true;
+    // Check if we can reuse the existing secret
+    // We reuse the secret to prevent invalidating the user's Authenticator app
+    // unless they explicitly request a new one (e.g. lost device) via ?regenerate=true
+    let shouldGenerateNew = !secretBase32;
 
-    if (secretBase32 && user.passwordChangeTotpRequestedAt) {
-      const ageMs = Date.now() - user.passwordChangeTotpRequestedAt.getTime();
-      const ageMinutes = ageMs / (60 * 1000);
-      
-      if (ageMinutes < maxMinutesReuse) {
-        shouldGenerateNew = false;
-        console.log(`[Auth] Reusing existing TOTP secret for user ${user.email} (age: ${ageMinutes.toFixed(2)}m)`);
-      }
+    if (req.query.regenerate === 'true') {
+      shouldGenerateNew = true;
+    }
+
+    if (!shouldGenerateNew) {
+      console.log(`[Auth] Reusing existing TOTP secret for user ${user.email}`);
     }
 
     if (shouldGenerateNew) {
@@ -384,6 +384,13 @@ const createPasswordChangeTotp = async (req, res) => {
             issuer: issuer,
             encoding: 'base32'
         });
+        
+        // Ensure verified status is reset when starting a new flow, even with same secret
+        if (user.passwordChangeTotpVerified) {
+             user.passwordChangeTotpVerified = false;
+             user.passwordChangeTotpVerifiedAt = null;
+             await user.save();
+        }
     }
 
     const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);

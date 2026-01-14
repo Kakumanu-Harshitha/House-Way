@@ -344,13 +344,25 @@ const EmployeeAttendanceModal = ({ visible, employee, attendanceRecords, project
             <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
                     <View style={styles.modalHeader}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.modalTitle}>
-                                👤 {employee.firstName} {employee.lastName}
-                            </Text>
-                            <Text style={styles.modalSubtitle}>
-                                {employee.employeeDetails?.position || 'Employee'}
-                            </Text>
+                        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                            {employee.profileImage ? (
+                                <Image
+                                    source={{ uri: employee.profileImage.includes('?') ? `${employee.profileImage}&t=${new Date().getTime()}` : `${employee.profileImage}?t=${new Date().getTime()}` }}
+                                    style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12, backgroundColor: '#f0f0f0' }}
+                                />
+                            ) : (
+                                <View style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12, backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Text style={{ fontSize: 20 }}>👤</Text>
+                                </View>
+                            )}
+                            <View>
+                                <Text style={styles.modalTitle}>
+                                    {employee.firstName} {employee.lastName}
+                                </Text>
+                                <Text style={styles.modalSubtitle}>
+                                    {employee.employeeDetails?.position || 'Employee'}
+                                </Text>
+                            </View>
                         </View>
                         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                             <Ionicons name="close" size={28} color="#333" />

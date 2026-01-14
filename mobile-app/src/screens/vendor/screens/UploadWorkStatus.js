@@ -6,8 +6,10 @@ import * as DocumentPicker from 'expo-document-picker';
 import AppHeader from '../components/AppHeader';
 import theme from '../../../styles/theme';
 import { filesAPI, workStatusAPI } from '../../../utils/api';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function UploadWorkStatus({ navigation, route }) {
+  const { user } = useAuth();
   const { quotation, materialRequest } = route.params || {};
   
   const [statusMessage, setStatusMessage] = useState('');
@@ -378,6 +380,8 @@ export default function UploadWorkStatus({ navigation, route }) {
       <AppHeader 
         title={existingWorkStatus ? "Update Work Status" : "Upload Work Status"} 
         onBack={() => navigation.goBack()}
+        user={user}
+        onProfile={() => navigation.navigate('VendorProfile')}
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>

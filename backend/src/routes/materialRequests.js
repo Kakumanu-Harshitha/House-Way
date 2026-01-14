@@ -130,11 +130,11 @@ router.get('/:id', authenticate, async (req, res) => {
 
     const materialRequest = await MaterialRequest.findById(id)
       .populate('project', 'title status client assignedEmployees assignedVendors')
-      .populate('requestedBy', 'firstName lastName email')
-      .populate('assignedVendors.vendor', 'firstName lastName email vendorDetails')
-      .populate('assignedVendors.assignedBy', 'firstName lastName')
-      .populate('approvals.approvedBy', 'firstName lastName')
-      .populate('notes.author', 'firstName lastName');
+      .populate('requestedBy', 'firstName lastName email profileImage')
+      .populate('assignedVendors.vendor', 'firstName lastName email vendorDetails profileImage')
+      .populate('assignedVendors.assignedBy', 'firstName lastName profileImage')
+      .populate('approvals.approvedBy', 'firstName lastName profileImage')
+      .populate('notes.author', 'firstName lastName profileImage');
 
     if (!materialRequest) {
       return res.status(404).json({

@@ -20,8 +20,8 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
-import { purchaseOrdersAPI } from '../../../utils/api';
+import { useAuth } from '../../../context/AuthContext';
+import AppHeader from '../components/AppHeader';
 
 const DELIVERY_STATUSES = [
   { value: 'not_started', label: 'Not Started', icon: 'clipboard-outline', color: '#9CA3AF' },
@@ -34,7 +34,11 @@ const DELIVERY_STATUSES = [
   { value: 'partially_delivered', label: 'Partially Delivered', icon: 'alert-circle-outline', color: '#F97316' },
 ];
 
+import { useFocusEffect } from '@react-navigation/native';
+import purchaseOrdersAPI from '../../../services/purchaseOrdersAPI';
+
 const VendorDeliveryScreen = ({ navigation }) => {
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -304,16 +308,15 @@ const VendorDeliveryScreen = ({ navigation }) => {
     </Modal>
   );
 
-  if (loading) {
+  if (loading && !refreshing) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#111827" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Delivery Tracking</Text>
-          <View style={{ width: 24 }} />
-        </View>
+        <AppHeader 
+          title="Delivery Tracking" 
+          onBack={() => navigation.goBack()} 
+          onProfile={() => navigation.navigate('VendorProfile')}
+          user={user}
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3B82F6" />
           <Text style={styles.loadingText}>Loading orders...</Text>
@@ -324,22 +327,12 @@ const VendorDeliveryScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="arrow-back" size={24} color="#111827" />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Delivery Tracking</Text>
-          <Text style={styles.headerSubtitle}>{orders.length} active order{orders.length !== 1 ? 's' : ''}</Text>
-        </View>
-        <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
-          <Ionicons name="refresh" size={22} color="#3B82F6" />
-        </TouchableOpacity>
-      </View>
+      <AppHeader 
+        title="Delivery Tracking" 
+        onBack={() => navigation.goBack()} 
+        onProfile={() => navigation.navigate('VendorProfile')}
+        user={user}
+      />
 
       {orders.length === 0 ? (
         <View style={styles.emptyContainer}>

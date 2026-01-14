@@ -4,8 +4,10 @@ import { Feather } from '@expo/vector-icons';
 import AppHeader from '../components/AppHeader';
 import theme from '../../../styles/theme';
 import { quotationsAPI, materialRequestsAPI } from '../../../utils/api';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function QuotationManagement({ navigation, route }) {
+  const { user } = useAuth();
   const { materialRequest, quotation, mode } = route.params || {};
   
   const [isCreating, setIsCreating] = useState(mode === 'create' || mode === 'update');
@@ -251,7 +253,11 @@ export default function QuotationManagement({ navigation, route }) {
   if (!isCreating) {
     return (
       <View style={styles.container}>
-        <AppHeader title="Quotation Management" />
+        <AppHeader 
+          title="Quotation Management" 
+          user={user}
+          onProfile={() => navigation.navigate('VendorProfile')}
+        />
         <View style={styles.centeredContainer}>
           <Feather name="file-text" size={64} color={theme.colors.text.muted} />
           <Text style={styles.emptyText}>
@@ -272,6 +278,9 @@ export default function QuotationManagement({ navigation, route }) {
     <View style={styles.container}>
       <AppHeader 
         title={isUpdating ? "Update Quotation" : "Create Quotation"} 
+        user={user}
+        onProfile={() => navigation.navigate('VendorProfile')}
+        showBack={true}
         onBack={() => navigation.goBack()}
       />
       

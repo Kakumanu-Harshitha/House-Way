@@ -6,6 +6,7 @@ import {
   StyleSheet,
   StatusBar,
   Platform,
+  Image,
 } from 'react-native';
 import theme from '../styles/theme';
 
@@ -98,11 +99,22 @@ const ModernHeader = ({
               style={styles.profileButton}
               onPress={onProfilePress}
             >
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {user.firstName?.[0]}{user.lastName?.[0]}
-                </Text>
-              </View>
+              {user.profileImage ? (
+                <Image
+                  source={{ 
+                    uri: user.profileImage.includes('?') 
+                      ? `${user.profileImage}&t=${new Date().getTime()}` 
+                      : `${user.profileImage}?t=${new Date().getTime()}` 
+                  }}
+                  style={styles.avatarImage}
+                />
+              ) : (
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {user.firstName?.[0]}{user.lastName?.[0]}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           )}
         </View>
@@ -329,6 +341,11 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.secondary[500],
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  avatarImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   avatarText: {
     fontSize: 16,

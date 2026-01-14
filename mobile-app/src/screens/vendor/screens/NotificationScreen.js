@@ -3,8 +3,10 @@ import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import AppHeader from '../components/AppHeader';
 import theme from '../../../styles/theme';
 import { dashboardAPI } from '../../../utils/api';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function NotificationsScreen({ navigation }) {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,7 +57,12 @@ export default function NotificationsScreen({ navigation }) {
 
   return (
     <View style={{ flex:1, backgroundColor: theme.colors.background }}>
-      <AppHeader title="Notifications" onMenu={() => navigation.openDrawer()} />
+      <AppHeader 
+        title="Notifications" 
+        onMenu={() => navigation.openDrawer()} 
+        user={user}
+        onProfile={() => navigation.navigate('VendorProfile')}
+      />
       <ScrollView contentContainerStyle={{ padding: 18 }}>
         <TouchableOpacity 
           style={{ alignSelf: 'flex-end', marginBottom: 12 }}
