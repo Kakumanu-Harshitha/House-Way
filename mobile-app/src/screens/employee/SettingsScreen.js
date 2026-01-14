@@ -147,7 +147,7 @@ const SettingsScreen = ({ navigation }) => {
                             <View style={styles.avatar}>
                                 {user?.profilePicture ? (
                                     <Image
-                                        source={{ uri: user.profilePicture }}
+                                        source={{ uri: user.profilePicture.includes('?') ? `${user.profilePicture}&t=${new Date().getTime()}` : `${user.profilePicture}?t=${new Date().getTime()}` }}
                                         style={styles.avatarImage}
                                     />
                                 ) : (

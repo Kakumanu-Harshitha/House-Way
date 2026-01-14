@@ -65,6 +65,18 @@ const EmployeeListItem = ({ employee, onPress }) => {
 
     return (
         <TouchableOpacity style={styles.listItem} onPress={onPress}>
+            {employee.profileImage ? (
+                <Image
+                    source={{ uri: employee.profileImage.includes('?') ? `${employee.profileImage}&t=${new Date().getTime()}` : `${employee.profileImage}?t=${new Date().getTime()}` }}
+                    style={[styles.employeeAvatar, { backgroundColor: 'transparent' }]}
+                />
+            ) : (
+                <View style={styles.employeeAvatar}>
+                    <Text style={styles.avatarText}>
+                        {employee.firstName?.charAt(0)}{employee.lastName?.charAt(0)}
+                    </Text>
+                </View>
+            )}
             <View style={styles.listContent}>
                 <Text style={styles.listTitle}>
                     {employee.firstName} {employee.lastName}
@@ -753,13 +765,25 @@ const styles = StyleSheet.create({
     },
     listItem: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 12,
+        padding: 12,
         backgroundColor: '#f8f9fa',
-        marginBottom: 8,
         borderRadius: 8,
+        marginBottom: 8,
+    },
+    employeeAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#ffc107',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    avatarText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#212529',
     },
     listContent: {
         flex: 1,

@@ -469,9 +469,46 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
+  const fetchUserData = async () => {
+    if (!user?._id) return;
+    try {
+      const response = await usersAPI.getUserById(user._id);
+      if (response.success) {
+        const userData = response.data.user;
+        // Add cache busting to profile image URL to ensure freshness
+        const timestamp = new Date().getTime();
+        const profileImageUrl = userData.profileImage ? 
+          (userData.profileImage.includes('?') ? `${userData.profileImage}&t=${timestamp}` : `${userData.profileImage}?t=${timestamp}`) 
+          : null;
+          
+        setProfileImage(profileImageUrl);
+        setProfileData({
+          firstName: userData.firstName || '',
+          lastName: userData.lastName || '',
+          email: userData.email || '',
+          phone: userData.phone || '',
+          address: userData.address || '',
+        });
+        
+        // Update context only if data changed significantly (avoid loops)
+        if (user.profileImage !== userData.profileImage || 
+            user.firstName !== userData.firstName || 
+            user.lastName !== userData.lastName) {
+            updateUser(userData);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
   const onRefresh = async () => {
     setRefreshing(true);
-    // Refresh user data if needed
+    await fetchUserData();
     setRefreshing(false);
   };
 

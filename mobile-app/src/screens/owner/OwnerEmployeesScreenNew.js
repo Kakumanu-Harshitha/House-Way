@@ -22,6 +22,7 @@ import {
     Alert,
     RefreshControl,
     Dimensions,
+    Image,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -233,14 +234,21 @@ const DayDetailsModal = ({ visible, date, dayData, employees, onClose }) => {
                         {employeeAttendance.map(({ employee, record }) => (
                             <View key={employee._id} style={styles.attendanceRow}>
                                 <View style={styles.employeeInfo}>
-                                    <View style={[
-                                        styles.avatarSmall,
-                                        { backgroundColor: record ? '#10B981' : '#EF4444' }
-                                    ]}>
-                                        <Text style={styles.avatarText}>
-                                            {employee.firstName?.[0]?.toUpperCase() || 'E'}
-                                        </Text>
-                                    </View>
+                                    {employee.profileImage ? (
+                                        <Image
+                                            source={{ uri: employee.profileImage.includes('?') ? `${employee.profileImage}&t=${new Date().getTime()}` : `${employee.profileImage}?t=${new Date().getTime()}` }}
+                                            style={[styles.avatarSmall, { backgroundColor: 'transparent' }]}
+                                        />
+                                    ) : (
+                                        <View style={[
+                                            styles.avatarSmall,
+                                            { backgroundColor: record ? '#10B981' : '#EF4444' }
+                                        ]}>
+                                            <Text style={styles.avatarText}>
+                                                {employee.firstName?.[0]?.toUpperCase() || 'E'}
+                                            </Text>
+                                        </View>
+                                    )}
                                     <View>
                                         <Text style={styles.employeeName}>
                                             {employee.firstName} {employee.lastName}
@@ -721,14 +729,21 @@ const OwnerEmployeesScreen = ({ navigation }) => {
                                 style={styles.employeeCard}
                                 onPress={() => handleEmployeeSelect(emp)}
                             >
-                                <View style={[
-                                    styles.avatar,
-                                    { backgroundColor: isPresent ? '#10B981' : '#9CA3AF' }
-                                ]}>
-                                    <Text style={styles.avatarLetter}>
-                                        {emp.firstName?.[0]?.toUpperCase() || 'E'}
-                                    </Text>
-                                </View>
+                                {emp.profileImage ? (
+                                    <Image
+                                        source={{ uri: emp.profileImage.includes('?') ? `${emp.profileImage}&t=${new Date().getTime()}` : `${emp.profileImage}?t=${new Date().getTime()}` }}
+                                        style={[styles.avatar, { backgroundColor: 'transparent' }]}
+                                    />
+                                ) : (
+                                    <View style={[
+                                        styles.avatar,
+                                        { backgroundColor: isPresent ? '#10B981' : '#9CA3AF' }
+                                    ]}>
+                                        <Text style={styles.avatarLetter}>
+                                            {emp.firstName?.[0]?.toUpperCase() || 'E'}
+                                        </Text>
+                                    </View>
+                                )}
                                 <View style={styles.employeeDetails}>
                                     <Text style={styles.employeeNameLarge}>
                                         {emp.firstName} {emp.lastName}

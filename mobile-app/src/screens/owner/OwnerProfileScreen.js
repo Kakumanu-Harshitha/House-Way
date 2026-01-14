@@ -13,6 +13,7 @@ import {
   Modal,
   ActivityIndicator,
   Image,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -39,6 +40,48 @@ const OwnerProfileScreen = ({ navigation }) => {
     phone: user?.phone || '',
   });
   const [profileImage, setProfileImage] = useState(user?.profileImage || null);
+  
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchUserData = async () => {
+    if (!user?._id) return;
+    try {
+      const response = await usersAPI.getUserById(user._id);
+      if (response.success) {
+        const userData = response.data.user;
+        const timestamp = new Date().getTime();
+        const profileImageUrl = userData.profileImage ? 
+          (userData.profileImage.includes('?') ? `${userData.profileImage}&t=${timestamp}` : `${userData.profileImage}?t=${timestamp}`) 
+          : null;
+        
+        setProfileImage(profileImageUrl);
+        setFormData({
+          firstName: userData.firstName || '',
+          lastName: userData.lastName || '',
+          email: userData.email || '',
+          phone: userData.phone || '',
+        });
+        
+        if (user.profileImage !== userData.profileImage || 
+            user.firstName !== userData.firstName || 
+            user.lastName !== userData.lastName) {
+            updateUser(userData);
+        }
+      }
+    } catch (error) {
+      console.error('Fetch user error:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchUserData();
+    setRefreshing(false);
+  };
   
   const [notifications, setNotifications] = useState({
     email: true,

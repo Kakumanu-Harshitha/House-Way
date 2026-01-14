@@ -431,33 +431,18 @@ const verifyPasswordChangeTotp = async (req, res) => {
     if (!user || !user.passwordChangeTotpSecret) {
       return res.status(400).json({
         success: false,
-        message: 'No active OTP session. Please generate a new QR code.',
+        message: 'No TOTP setup found. Please generate a QR code first.',
       });
     }
 
-    if (!user.passwordChangeTotpRequestedAt) {
-      return res.status(400).json({
-        success: false,
-        message: 'OTP session is invalid. Please generate a new QR code.',
-      });
-    }
-
+    // REMOVED SESSION CHECKS to support persistent TOTP
+    // The secret is valid as long as it exists in the database.
+    
+    /* 
+    if (!user.passwordChangeTotpRequestedAt) { ... }
     const maxMinutesSinceRequest = 15;
-    const ageMs = Date.now() - user.passwordChangeTotpRequestedAt.getTime();
-    const ageMinutes = ageMs / (60 * 1000);
-
-    if (ageMinutes > maxMinutesSinceRequest) {
-      user.passwordChangeTotpSecret = null;
-      user.passwordChangeTotpVerified = false;
-      user.passwordChangeTotpRequestedAt = null;
-      user.passwordChangeTotpVerifiedAt = null;
-      await user.save();
-
-      return res.status(400).json({
-        success: false,
-        message: 'OTP session expired. Please generate a new QR code.',
-      });
-    }
+    if (ageMinutes > maxMinutesSinceRequest) { ... }
+    */
 
     // Use verifyDelta to check window and get delta
     const delta = speakeasy.totp.verifyDelta({

@@ -10,6 +10,7 @@ import {
   TextInput,
   ActivityIndicator,
   ScrollView,
+  Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
@@ -449,6 +450,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  avatarImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 12,
+    backgroundColor: COLORS.cardBg,
   },
   avatarText: {
     fontSize: 16,

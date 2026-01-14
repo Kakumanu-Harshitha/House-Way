@@ -1524,9 +1524,13 @@ const VendorTab = ({ project, onAssign }) => (
         {project.assignedVendors && project.assignedVendors.length > 0 ? (
             project.assignedVendors.map((vendor, index) => (
                 <View key={vendor._id || index} style={styles.vendorCard}>
-                    <View style={styles.vendorAvatar}>
-                        <Feather name="user" size={20} color={COLORS.primary} />
-                    </View>
+                    {vendor.profileImage ? (
+                        <Image source={{ uri: vendor.profileImage }} style={styles.vendorAvatar} />
+                    ) : (
+                        <View style={styles.vendorAvatar}>
+                            <Feather name="user" size={20} color={COLORS.primary} />
+                        </View>
+                    )}
                     <View style={{ flex: 1 }}>
                         <Text style={styles.vendorName}>{vendor.firstName} {vendor.lastName}</Text>
                         <Text style={styles.vendorEmail}>{vendor.email || 'Vendor Team Employee'}</Text>

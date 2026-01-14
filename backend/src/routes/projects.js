@@ -185,13 +185,13 @@ router.get('/:id', authenticate, async (req, res) => {
     const { id } = req.params;
 
     const project = await Project.findById(id)
-      .populate('client', 'firstName lastName email phone clientDetails')
-      .populate('assignedEmployees', 'firstName lastName email employeeDetails')
-      .populate('assignedVendors', 'firstName lastName email vendorDetails')
-      .populate('createdBy', 'firstName lastName email')
-      .populate('notes.author', 'firstName lastName')
-      .populate('documents.uploadedBy', 'firstName lastName')
-      .populate('images.uploadedBy', 'firstName lastName');
+      .populate('client', 'firstName lastName email phone clientDetails profileImage')
+      .populate('assignedEmployees', 'firstName lastName email employeeDetails profileImage')
+      .populate('assignedVendors', 'firstName lastName email vendorDetails profileImage')
+      .populate('createdBy', 'firstName lastName email profileImage')
+      .populate('notes.author', 'firstName lastName profileImage')
+      .populate('documents.uploadedBy', 'firstName lastName profileImage')
+      .populate('images.uploadedBy', 'firstName lastName profileImage');
 
     if (!project) {
       return res.status(404).json({

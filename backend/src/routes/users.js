@@ -417,7 +417,7 @@ router.post('/profile-photo', authenticate, upload.single('photo'), async (req, 
     const result = await uploadToGCS({
       buffer: req.file.buffer,
       mimetype: req.file.mimetype,
-      originalname: req.file.originalname,
+      originalname: `${req.user._id}_${req.file.originalname}`, // Add user ID to filename
       folder: 'profile-photos',
     });
 

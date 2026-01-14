@@ -12,6 +12,7 @@ import {
   Alert,
   Platform,
   Linking,
+  Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -1394,9 +1395,13 @@ const TeamTab = ({ project, navigation, onRefresh, currentUser }) => {
 
       {executiveEmployee ? (
         <View style={styles.teamMember}>
-          <View style={styles.teamAvatar}>
-            <Feather name="user" size={20} color={COLORS.primary} />
-          </View>
+          {executiveEmployee.profileImage ? (
+            <Image source={{ uri: executiveEmployee.profileImage }} style={styles.teamAvatar} />
+          ) : (
+            <View style={styles.teamAvatar}>
+              <Feather name="user" size={20} color={COLORS.primary} />
+            </View>
+          )}
           <View style={[styles.teamInfo, { flex: 1 }]}>
             <Text style={styles.teamName}>
               {executiveEmployee.firstName} {executiveEmployee.lastName}
@@ -1467,9 +1472,13 @@ const TeamTab = ({ project, navigation, onRefresh, currentUser }) => {
                     onPress={() => handleAssignEmployee(emp._id)}
                     disabled={assigning}
                   >
-                    <View style={styles.teamAvatar}>
-                      <Feather name="user" size={20} color={COLORS.primary} />
-                    </View>
+                    {emp.profileImage ? (
+                      <Image source={{ uri: emp.profileImage }} style={styles.teamAvatar} />
+                    ) : (
+                      <View style={styles.teamAvatar}>
+                        <Feather name="user" size={20} color={COLORS.primary} />
+                      </View>
+                    )}
                     <View style={styles.teamInfo}>
                       <Text style={styles.teamName}>{emp.firstName} {emp.lastName}</Text>
                       <Text style={styles.teamRole}>{emp.email}</Text>

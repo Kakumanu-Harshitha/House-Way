@@ -12,7 +12,8 @@ import {
     Linking,
     TextInput,
     Alert,
-    RefreshControl
+    RefreshControl,
+    Image
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -46,6 +47,18 @@ const ClientListItem = ({ client, onPress }) => {
 
     return (
         <TouchableOpacity style={styles.listItem} onPress={onPress}>
+            {client.profileImage ? (
+                      <Image
+                        source={{ uri: client.profileImage.includes('?') ? `${client.profileImage}&t=${new Date().getTime()}` : `${client.profileImage}?t=${new Date().getTime()}` }}
+                        style={styles.clientAvatar}
+                      />
+                    ) : (
+                <View style={styles.clientAvatar}>
+                    <Text style={styles.avatarText}>
+                        {client.firstName?.[0] || '?'}
+                    </Text>
+                </View>
+            )}
             <View style={styles.listContent}>
                 <Text style={styles.listTitle}>
                     {client.firstName} {client.lastName}
@@ -490,11 +503,25 @@ const styles = StyleSheet.create({
     listItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingVertical: 12,
-        paddingHorizontal: 12,
+        alignItems: 'center',
+        padding: 12,
         backgroundColor: '#f8f9fa',
-        marginBottom: 8,
         borderRadius: 8,
+        marginBottom: 8,
+    },
+    clientAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#17a2b8',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    avatarText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#ffffff',
     },
     listContent: {
         flex: 1,

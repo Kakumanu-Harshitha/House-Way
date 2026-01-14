@@ -11,6 +11,7 @@ import {
   Modal,
   TextInput,
   Image,
+  RefreshControl,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -21,6 +22,7 @@ import theme from '../../../styles/theme';
 export default function VendorProfile({ navigation }) {
   const { user, logout, updateUser } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [vendor, setVendor] = useState({
     name: '',
     email: '',
@@ -43,6 +45,42 @@ export default function VendorProfile({ navigation }) {
   // Profile Photo State
   const [profileImage, setProfileImage] = useState(null);
 
+  const fetchUserData = async () => {
+    if (!user?._id) return;
+    try {
+      const response = await usersAPI.getUserById(user._id);
+      if (response.success) {
+        const userData = response.data.user;
+        
+        setVendor({
+            name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+            email: userData.email,
+            phone: userData.phone || 'Not provided',
+            companyName: userData.company || userData.vendorDetails?.companyName || 'Not provided',
+            specialization: userData.vendorDetails?.specialization || [],
+        });
+
+        const timestamp = new Date().getTime();
+        const imageUri = userData.profileImage ? 
+            (userData.profileImage.includes('?') ? `${userData.profileImage}&t=${timestamp}` : `${userData.profileImage}?t=${timestamp}`)
+            : null;
+        setProfileImage(imageUri);
+
+        if (updateUser) {
+          await updateUser(userData);
+        }
+      }
+    } catch (error) {
+      console.error('Fetch user error:', error);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchUserData();
+    setRefreshing(false);
+  };
+
   useEffect(() => {
     if (user) {
       setVendor({
@@ -52,9 +90,23 @@ export default function VendorProfile({ navigation }) {
         companyName: user.company || user.vendorDetails?.companyName || 'Not provided',
         specialization: user.vendorDetails?.specialization || [],
       });
-      setProfileImage(user.profileImage || null);
+      
+      // Update profile image if base URL changes, preserving timestamp if exists and base is same
+      if (user.profileImage) {
+         if (!profileImage || !profileImage.includes(user.profileImage)) {
+             const timestamp = new Date().getTime();
+             setProfileImage(user.profileImage.includes('?') ? `${user.profileImage}&t=${timestamp}` : `${user.profileImage}?t=${timestamp}`);
+         }
+      } else {
+         setProfileImage(null);
+      }
     }
   }, [user]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchUserData();
+  }, []);
 
   // ---------------------------
   // 📸 Profile Photo Logic
@@ -99,9 +151,13 @@ export default function VendorProfile({ navigation }) {
 
       const uploadResponse = await usersAPI.uploadProfilePhoto(formDataUpload);
       if (uploadResponse.success) {
-        setProfileImage(uploadResponse.data.profileImage);
+        const timestamp = new Date().getTime();
+        const newImage = uploadResponse.data.profileImage;
+        const imageWithTimestamp = newImage.includes('?') ? `${newImage}&t=${timestamp}` : `${newImage}?t=${timestamp}`;
+        
+        setProfileImage(imageWithTimestamp);
         if (updateUser && user) {
-          await updateUser({ ...user, profileImage: uploadResponse.data.profileImage });
+          await updateUser({ ...user, profileImage: newImage });
         }
         Alert.alert('Success', 'Profile photo updated successfully');
       } else {
@@ -292,7 +348,12 @@ export default function VendorProfile({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Profile</Text>

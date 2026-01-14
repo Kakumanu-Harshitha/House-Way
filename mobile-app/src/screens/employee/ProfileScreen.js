@@ -14,6 +14,7 @@ import {
     Keyboard,
     StatusBar,
     Modal,
+    RefreshControl,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -101,6 +102,50 @@ const ProfileScreen = ({ navigation, route }) => {
         email: user?.email || '',
         phone: user?.phone || '',
     });
+
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchUserData = async () => {
+        if (!user?._id) return;
+        try {
+            const response = await usersAPI.getUserById(user._id);
+            if (response.success) {
+                const userData = response.data.user;
+                // Cache busting
+                const timestamp = new Date().getTime();
+                const profileImageUrl = userData.profileImage ? 
+                  (userData.profileImage.includes('?') ? `${userData.profileImage}&t=${timestamp}` : `${userData.profileImage}?t=${timestamp}`) 
+                  : null;
+
+                setProfileImage(profileImageUrl);
+                setFormData(prev => ({
+                    ...prev,
+                    firstName: userData.firstName || '',
+                    lastName: userData.lastName || '',
+                    email: userData.email || '',
+                    phone: userData.phone || '',
+                }));
+                
+                if (user.profileImage !== userData.profileImage || 
+                    user.firstName !== userData.firstName || 
+                    user.lastName !== userData.lastName) {
+                    updateUser(userData);
+                }
+            }
+        } catch (error) {
+            console.error('Fetch user error:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchUserData();
+    }, []);
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchUserData();
+        setRefreshing(false);
+    };
 
     const [passwordData, setPasswordData] = useState({
         otp: '',
@@ -429,6 +474,9 @@ const ProfileScreen = ({ navigation, route }) => {
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    }
                 >
                     {/* Header */}
                     <View style={styles.header}>

@@ -24,7 +24,21 @@ const {
 } = require('../middleware/validation');
 
 const { authenticate, isOwner } = require('../middleware/auth');
-const { uploadSingle, getFileUrl } = require('../middleware/upload');
+// const { uploadSingle, getFileUrl } = require('../middleware/upload'); // Deprecated local upload
+const multer = require('multer');
+const { uploadToGCS, deleteFromGCS } = require('../utils/gcs');
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only images are allowed'), false);
+    }
+  }
+});
 
 /**
  * ============================
@@ -157,85 +171,9 @@ router.post('/register-guest', (req, res, next) => {
  * ============================
  */
 
-/**
- * @route   POST /api/auth/upload-profile-photo
- * @desc    Upload profile photo
- * @access  Private
- */
-router.post('/upload-profile-photo', authenticate, uploadSingle('profilePhoto'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: 'No file uploaded' });
-    }
+// Profile photo handling has been moved to users.js
+// Use /api/users/profile-photo for upload and delete
 
-    if (!req.file.mimetype.startsWith('image/')) {
-      return res.status(400).json({ success: false, message: 'Only image files are allowed' });
-    }
-
-    const User = require('../models/User');
-    const profileImageUrl = getFileUrl(req, `images/${req.file.filename}`);
-
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { profileImage: profileImageUrl },
-      { new: true, runValidators: true }
-    );
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    res.json({
-      success: true,
-      message: 'Profile photo uploaded successfully',
-      data: {
-        profileImage: profileImageUrl,
-        user: user.toSafeObject(),
-      },
-    });
-  } catch (error) {
-    console.error('Profile photo upload error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to upload profile photo',
-      error: error.message,
-    });
-  }
-});
-
-/**
- * @route   DELETE /api/auth/remove-profile-photo
- * @desc    Remove profile photo
- * @access  Private
- */
-router.delete('/remove-profile-photo', authenticate, async (req, res) => {
-  try {
-    const User = require('../models/User');
-
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { $unset: { profileImage: 1 } },
-      { new: true, runValidators: true }
-    );
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    res.json({
-      success: true,
-      message: 'Profile photo removed successfully',
-      data: { user: user.toSafeObject() },
-    });
-  } catch (error) {
-    console.error('Profile photo removal error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to remove profile photo',
-      error: error.message,
-    });
-  }
-});
 
 /**
  * ============================

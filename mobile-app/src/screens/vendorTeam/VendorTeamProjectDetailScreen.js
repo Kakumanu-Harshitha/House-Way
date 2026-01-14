@@ -11,6 +11,7 @@ import {
     Modal,
     Alert,
     Platform,
+    Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -338,9 +339,16 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                 {project?.assignedEmployees && project.assignedEmployees.length > 0 ? (
                     project.assignedEmployees.map((employee, index) => (
                         <View key={employee._id || index} style={styles.teamMember}>
-                            <View style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]}>
-                                <Feather name="hard-hat" size={16} color={theme.colors.primary[600]} />
-                            </View>
+                            {employee.profileImage ? (
+                                <Image 
+                                    source={{ uri: employee.profileImage }} 
+                                    style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]} 
+                                />
+                            ) : (
+                                <View style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]}>
+                                    <Feather name="hard-hat" size={16} color={theme.colors.primary[600]} />
+                                </View>
+                            )}
                             <View style={{ marginLeft: 10 }}>
                                 <Text style={styles.memberName}>
                                     {employee.firstName} {employee.lastName}
@@ -362,9 +370,16 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                         <View style={{ height: 8 }} />
                         {project.designTeam.map((designer, index) => (
                             <View key={designer._id || index} style={styles.teamMember}>
-                                <View style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]}>
-                                    <Feather name="pen-tool" size={16} color={theme.colors.primary[600]} />
-                                </View>
+                                {designer.profileImage ? (
+                                    <Image 
+                                        source={{ uri: designer.profileImage }} 
+                                        style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]} 
+                                    />
+                                ) : (
+                                    <View style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]}>
+                                        <Feather name="pen-tool" size={16} color={theme.colors.primary[600]} />
+                                    </View>
+                                )}
                                 <View style={{ marginLeft: 10 }}>
                                     <Text style={styles.memberName}>
                                         {designer.firstName} {designer.lastName}
@@ -382,9 +397,16 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                         <View style={{ height: 8 }} />
                         {project.assignedVendors.map((vendor, index) => (
                             <View key={vendor._id || index} style={styles.teamMember}>
-                                <View style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]}>
-                                    <Feather name="truck" size={16} color={theme.colors.primary[600]} />
-                                </View>
+                                {vendor.profileImage ? (
+                                    <Image 
+                                        source={{ uri: vendor.profileImage }} 
+                                        style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]} 
+                                    />
+                                ) : (
+                                    <View style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]}>
+                                        <Feather name="truck" size={16} color={theme.colors.primary[600]} />
+                                    </View>
+                                )}
                                 <View style={{ marginLeft: 10 }}>
                                     <Text style={styles.memberName}>
                                         {vendor.firstName} {vendor.lastName}
@@ -407,9 +429,16 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                 <Text style={styles.cardTitle}>Executive Team</Text>
                 {project?.assignedEmployee ? (
                     <View style={styles.teamMember}>
-                        <View style={styles.avatar}>
-                            <Feather name="hard-hat" size={20} color={theme.colors.primary[600]} />
-                        </View>
+                        {project.assignedEmployee.profileImage ? (
+                            <Image 
+                                source={{ uri: project.assignedEmployee.profileImage }} 
+                                style={styles.avatar} 
+                            />
+                        ) : (
+                            <View style={styles.avatar}>
+                                <Feather name="hard-hat" size={20} color={theme.colors.primary[600]} />
+                            </View>
+                        )}
                         <View style={styles.memberInfo}>
                             <Text style={styles.memberName}>
                                 {project.assignedEmployee.firstName} {project.assignedEmployee.lastName}
@@ -428,9 +457,16 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                 {project?.designTeam && project.designTeam.length > 0 ? (
                     project.designTeam.map((member, index) => (
                         <View key={index} style={styles.teamMember}>
-                            <View style={styles.avatar}>
-                                <Feather name="pen-tool" size={20} color={theme.colors.primary[600]} />
-                            </View>
+                            {member.profileImage ? (
+                                <Image 
+                                    source={{ uri: member.profileImage }} 
+                                    style={styles.avatar} 
+                                />
+                            ) : (
+                                <View style={styles.avatar}>
+                                    <Feather name="pen-tool" size={20} color={theme.colors.primary[600]} />
+                                </View>
+                            )}
                             <View style={styles.memberInfo}>
                                 <Text style={styles.memberName}>
                                     {member.firstName} {member.lastName}
@@ -465,9 +501,16 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                                 style={styles.vendorItem}
                                 onPress={() => setExpandedVendor(expandedVendor === vendor._id ? null : vendor._id)}
                             >
-                                <View style={styles.avatar}>
-                                    <Feather name="user" size={20} color={theme.colors.primary[600]} />
-                                </View>
+                                {vendor.profileImage ? (
+                                    <Image 
+                                        source={{ uri: vendor.profileImage }} 
+                                        style={styles.avatar} 
+                                    />
+                                ) : (
+                                    <View style={styles.avatar}>
+                                        <Feather name="user" size={20} color={theme.colors.primary[600]} />
+                                    </View>
+                                )}
                                 <View style={{ flex: 1, marginLeft: 12 }}>
                                     <Text style={styles.memberName}>
                                         {vendor.vendorDetails?.companyName || `${vendor.firstName || ''} ${vendor.lastName || ''}`.trim() || 'Vendor'}

@@ -11,6 +11,7 @@ import {
   Alert,
   RefreshControl,
   TextInput,
+  Image,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -24,11 +25,18 @@ const getOrderFinalAmount = (order) => Number(order?.negotiation?.finalAmount ??
 // Vendor List Item
 const VendorListItem = ({ vendor, onPress, pendingCount, ordersCount }) => (
   <TouchableOpacity style={styles.listItem} onPress={onPress}>
-    <View style={styles.vendorAvatar}>
-      <Text style={styles.avatarText}>
-        {vendor.vendorDetails?.companyName?.[0] || vendor.firstName?.[0] || '?'}
-      </Text>
-    </View>
+    {vendor.profileImage ? (
+      <Image
+        source={{ uri: vendor.profileImage.includes('?') ? `${vendor.profileImage}&t=${new Date().getTime()}` : `${vendor.profileImage}?t=${new Date().getTime()}` }}
+        style={styles.vendorAvatar}
+      />
+    ) : (
+      <View style={styles.vendorAvatar}>
+        <Text style={styles.avatarText}>
+          {vendor.vendorDetails?.companyName?.[0] || vendor.firstName?.[0] || '?'}
+        </Text>
+      </View>
+    )}
     <View style={styles.listContent}>
       <Text style={styles.listTitle}>
         {vendor.vendorDetails?.companyName || `${vendor.firstName} ${vendor.lastName}`}

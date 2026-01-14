@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
@@ -298,10 +299,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  avatarImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    marginBottom: 12,
+  },
   avatarText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.text,
+    color: COLORS.white,
   },
   clientName: {
     fontSize: 22,

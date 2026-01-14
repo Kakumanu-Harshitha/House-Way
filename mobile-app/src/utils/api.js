@@ -84,9 +84,8 @@ export const authAPI = {
     api.put('/auth/change-password', passwordData, {
       headers: { 'Content-Type': 'application/json' },
     }),
-  uploadProfilePhoto: (formData) =>
-    api.post('/auth/upload-profile-photo', formData),
-  removeProfilePhoto: () => api.delete('/auth/remove-profile-photo'),
+  // uploadProfilePhoto and removeProfilePhoto removed - use usersAPI instead
+
 
   // Password reset via Email OTP
   requestPasswordOTP: (email) =>
