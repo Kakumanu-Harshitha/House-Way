@@ -300,9 +300,9 @@ const changePassword = async (req, res) => {
     const ageMinutes = ageMs / (60 * 1000);
 
     if (ageMinutes > maxMinutesSinceVerification) {
-      user.passwordChangeTotpSecret = null;
+      // Expired verification session, but we keep the secret if it's still within its own 15m window (handled by create/verify)
+      // Actually, if verification expired, we force re-verification.
       user.passwordChangeTotpVerified = false;
-      user.passwordChangeTotpRequestedAt = null;
       user.passwordChangeTotpVerifiedAt = null;
       await user.save();
 
@@ -313,9 +313,9 @@ const changePassword = async (req, res) => {
     }
 
     user.password = newPassword;
-    user.passwordChangeTotpSecret = null;
-    user.passwordChangeTotpVerified = false;
-    user.passwordChangeTotpRequestedAt = null;
+    // user.passwordChangeTotpSecret = null; // KEEP SECRET for reuse within window
+    user.passwordChangeTotpVerified = false; // Reset verified status
+    // user.passwordChangeTotpRequestedAt = null; // KEEP REQUEST TIME for age check
     user.passwordChangeTotpVerifiedAt = null;
     await user.save();
 
