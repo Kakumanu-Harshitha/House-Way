@@ -115,15 +115,12 @@ const ProfileScreen = ({ navigation, route }) => {
         otpVerified: false,
     });
 
-    const [showPasswordSection, setShowPasswordSection] = useState(false);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
     const scrollRef = React.useRef(null);
 
     useEffect(() => {
         if (route.params?.scrollToPassword) {
-            setShowPasswordSection(true);
-            setTimeout(() => {
-                scrollRef.current?.scrollToEnd({ animated: true });
-            }, 500);
+            setShowPasswordModal(true);
         }
     }, [route.params]);
 
@@ -369,7 +366,7 @@ const ProfileScreen = ({ navigation, route }) => {
                     error: '',
                     otpVerified: false,
                 });
-                setShowPasswordSection(false);
+                setShowPasswordModal(false);
                 setTimeout(() => logout(), 2000);
             } else {
                 throw new Error(changeResponse.message || 'Failed to change password');
@@ -538,95 +535,14 @@ const ProfileScreen = ({ navigation, route }) => {
                     <View style={styles.section}>
                         <TouchableOpacity
                             style={styles.sectionHeaderButton}
-                            onPress={() => setShowPasswordSection(!showPasswordSection)}
+                            onPress={handleChangePassword}
                         >
                             <View style={styles.sectionHeader}>
                                 <Feather name="lock" size={18} color={COLORS.primary} />
-                                <Text style={styles.sectionTitle}>Security</Text>
+                                <Text style={styles.sectionTitle}>Change Password</Text>
                             </View>
-                            <Feather
-                                name={showPasswordSection ? "chevron-up" : "chevron-down"}
-                                size={20}
-                                color={COLORS.textMuted}
-                            />
+                            <Feather name="chevron-right" size={20} color={COLORS.textMuted} />
                         </TouchableOpacity>
-
-                        {showPasswordSection && (
-                            <View style={styles.passwordSection}>
-                                {qrState.loading ? (
-                                    <View style={styles.passwordSection}>
-                                        <Text style={styles.otpLabel}>Generating QR code...</Text>
-                                    </View>
-                                ) : (
-                                    <>
-                                        {qrState.qrCodeDataUrl ? (
-                                            <View style={styles.qrContainer}>
-                                                <Text style={styles.otpLabel}>Scan this QR using Microsoft Authenticator</Text>
-                                                <Image
-                                                    source={{ uri: qrState.qrCodeDataUrl }}
-                                                    style={styles.qrImage}
-                                                    resizeMode="contain"
-                                                />
-                                            </View>
-                                        ) : null}
-
-                                        <View style={styles.passwordSection}>
-                                            <Text style={styles.otpLabel}>OTP (6-digit)</Text>
-                                            <TextInput
-                                                style={styles.otpInput}
-                                                value={passwordData.otp}
-                                                onChangeText={(val) => handlePasswordChange('otp', val)}
-                                                placeholder="123456"
-                                                keyboardType="number-pad"
-                                                maxLength={6}
-                                                placeholderTextColor={COLORS.textMuted}
-                                            />
-
-                                            <InputField
-                                                label="New Password"
-                                                value={passwordData.newPassword}
-                                                onChangeText={(v) => handlePasswordChange('newPassword', v)}
-                                                placeholder="Enter new password"
-                                                secureTextEntry
-                                                icon="lock"
-                                            />
-
-                                            <InputField
-                                                label="Confirm New Password"
-                                                value={passwordData.confirmPassword}
-                                                onChangeText={(v) => handlePasswordChange('confirmPassword', v)}
-                                                placeholder="Confirm new password"
-                                                secureTextEntry
-                                                icon="lock"
-                                            />
-
-                                            <TouchableOpacity
-                                                style={[
-                                                    styles.changePasswordBtn, 
-                                                    (isLoading || 
-                                                     !passwordData.otp || 
-                                                     passwordData.otp.length !== 6 || 
-                                                     !passwordData.newPassword || 
-                                                     !passwordData.confirmPassword ||
-                                                     passwordData.newPassword !== passwordData.confirmPassword) && styles.saveButtonDisabled
-                                                ]}
-                                                onPress={handlePasswordChangeSubmit}
-                                                disabled={isLoading || !passwordData.otp || passwordData.otp.length !== 6 || !passwordData.newPassword || !passwordData.confirmPassword || passwordData.newPassword !== passwordData.confirmPassword}
-                                            >
-                                                {isLoading ? (
-                                                    <ActivityIndicator color={COLORS.primary} />
-                                                ) : (
-                                                    <>
-                                                        <Feather name="shield" size={18} color={COLORS.primary} />
-                                                        <Text style={styles.changePasswordText}>Change Password</Text>
-                                                    </>
-                                                )}
-                                            </TouchableOpacity>
-                                        </View>
-                                    </>
-                                )}
-                            </View>
-                        )}
                     </View>
 
                     {/* Account Info */}

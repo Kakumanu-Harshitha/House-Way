@@ -597,7 +597,7 @@ const OwnerProfileScreen = ({ navigation }) => {
                    passwordData.newPassword !== passwordData.confirmPassword) && styles.buttonDisabled
                 ]}
                 onPress={handleChangePassword}
-                disabled={isChangingPassword || !passwordData.otp || passwordData.otp.length !== 6}
+                disabled={isChangingPassword || !passwordData.otp || passwordData.otp.length !== 6 || !passwordData.newPassword || !passwordData.confirmPassword || passwordData.newPassword !== passwordData.confirmPassword}
               >
                 {isChangingPassword ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />

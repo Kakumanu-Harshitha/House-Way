@@ -41,6 +41,9 @@ export default function VendorTeamProfileScreen({ navigation }) {
         confirmPassword: '',
     });
 
+    const [otpModalVisible, setOtpModalVisible] = useState(false);
+    const [otpLoading, setOtpLoading] = useState(false);
+
     const [qrState, setQrState] = useState({
         loading: false,
         qrCodeDataUrl: '',

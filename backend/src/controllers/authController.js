@@ -345,18 +345,47 @@ const createPasswordChangeTotp = async (req, res) => {
 
     const label = `${user.email}`;
     const issuer = 'Houseway Password Change';
+    let secretBase32 = user.passwordChangeTotpSecret;
+    let otpauthUrl;
 
-    const secret = speakeasy.generateSecret({
-      name: `${issuer} (${label})`,
-    });
+    // Check if we can reuse the existing secret (valid for 15 mins)
+    const maxMinutesReuse = 15;
+    let shouldGenerateNew = true;
 
-    user.passwordChangeTotpSecret = secret.base32;
-    user.passwordChangeTotpVerified = false;
-    user.passwordChangeTotpRequestedAt = new Date();
-    user.passwordChangeTotpVerifiedAt = null;
-    await user.save();
+    if (secretBase32 && user.passwordChangeTotpRequestedAt) {
+      const ageMs = Date.now() - user.passwordChangeTotpRequestedAt.getTime();
+      const ageMinutes = ageMs / (60 * 1000);
+      
+      if (ageMinutes < maxMinutesReuse) {
+        shouldGenerateNew = false;
+        console.log(`[Auth] Reusing existing TOTP secret for user ${user.email} (age: ${ageMinutes.toFixed(2)}m)`);
+      }
+    }
 
-    const otpauthUrl = secret.otpauth_url;
+    if (shouldGenerateNew) {
+      const secret = speakeasy.generateSecret({
+        name: `${issuer} (${label})`,
+      });
+      secretBase32 = secret.base32;
+      otpauthUrl = secret.otpauth_url;
+      
+      user.passwordChangeTotpSecret = secretBase32;
+      user.passwordChangeTotpVerified = false;
+      user.passwordChangeTotpRequestedAt = new Date();
+      user.passwordChangeTotpVerifiedAt = null;
+      await user.save();
+      
+      console.log(`[Auth] Generated NEW TOTP secret for user ${user.email}`);
+    } else {
+        // Reconstruct otpauthUrl for existing secret
+        otpauthUrl = speakeasy.otpauthURL({
+            secret: secretBase32,
+            label: label,
+            issuer: issuer,
+            encoding: 'base32'
+        });
+    }
+
     const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
 
     res.json({
@@ -368,6 +397,7 @@ const createPasswordChangeTotp = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error('Create TOTP error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to generate OTP QR code',
@@ -387,7 +417,16 @@ const verifyPasswordChangeTotp = async (req, res) => {
       });
     }
 
+    // Sanitize OTP (remove spaces, ensure string)
+    const otpClean = String(otp).trim();
+
     const user = await User.findById(req.user._id);
+
+    // DEBUG LOGGING
+    console.log(`[Auth] Verifying OTP for ${user.email}`);
+    console.log(`[Auth] Secret exists: ${!!user.passwordChangeTotpSecret}`);
+    console.log(`[Auth] OTP Received: '${otpClean}' (Length: ${otpClean.length})`);
+    // END DEBUG LOGGING
 
     if (!user || !user.passwordChangeTotpSecret) {
       return res.status(400).json({
@@ -420,12 +459,17 @@ const verifyPasswordChangeTotp = async (req, res) => {
       });
     }
 
-    const verified = speakeasy.totp.verify({
+    // Use verifyDelta to check window and get delta
+    const delta = speakeasy.totp.verifyDelta({
       secret: user.passwordChangeTotpSecret,
       encoding: 'base32',
       token: otp,
-      window: 1,
+      window: 6, // Increased window to allow +/- 3 minutes (total 6 mins window around current time) to handle drift and repeated attempts
+      step: 30, // Explicitly set step
     });
+    
+    console.log(`[Auth] OTP Verification Delta: ${JSON.stringify(delta)}`);
+    const verified = delta !== undefined;
 
     if (!verified) {
       return res.status(400).json({
@@ -443,6 +487,7 @@ const verifyPasswordChangeTotp = async (req, res) => {
       message: 'OTP verified successfully',
     });
   } catch (error) {
+    console.error('Verify TOTP error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to verify OTP',
