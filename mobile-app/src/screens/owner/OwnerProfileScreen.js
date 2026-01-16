@@ -43,7 +43,7 @@ const OwnerProfileScreen = ({ navigation }) => {
       if (response.success) {
         const userData = response.data.user;
         
-        setProfilePhoto(userData.profileImage || null);
+        setProfilePhoto(userData.profilePhoto || null);
         setFormData({
           firstName: userData.firstName || '',
           lastName: userData.lastName || '',
@@ -53,10 +53,6 @@ const OwnerProfileScreen = ({ navigation }) => {
         
         // Sync global state if needed (or always to keep timestamp fresh)
         if (syncUser) {
-           // Normalize profileImage to profilePhoto for frontend
-           if (userData.profileImage) {
-             userData.profilePhoto = userData.profileImage;
-           }
            syncUser(userData);
         }
       }
@@ -252,11 +248,11 @@ const OwnerProfileScreen = ({ navigation }) => {
       console.log('API response:', uploadResponse);
 
       if (uploadResponse.success) {
-        const newImage = uploadResponse.data.profileImage;
+        const newImage = uploadResponse.data.profilePhoto;
 
         setProfilePhoto(newImage);
         if (syncUser && user) {
-          await syncUser({ ...user, profilePhoto: newImage });
+          await syncUser({ ...user, profilePhoto: newImage, profileImage: newImage });
         }
         showAlert('Success', 'Profile photo updated successfully');
       } else {
@@ -299,7 +295,7 @@ const OwnerProfileScreen = ({ navigation }) => {
         setProfilePhoto(null);
         if (syncUser && user) {
           console.log('Syncing user with null profilePhoto');
-          await syncUser({ ...user, profilePhoto: null });
+          await syncUser({ ...user, profilePhoto: null, profileImage: null });
         }
         showAlert('Success', 'Profile photo removed successfully');
       } else {

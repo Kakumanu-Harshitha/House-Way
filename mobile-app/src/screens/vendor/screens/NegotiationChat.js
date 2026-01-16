@@ -21,6 +21,7 @@ export default function NegotiationChat({ route, navigation }) {
   const [quotationNote, setQuotationNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [sending, setSending] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const flatListRef = useRef(null);
   
   // Determine current user role
@@ -190,12 +191,13 @@ export default function NegotiationChat({ route, navigation }) {
   }
 
   const renderProfileImage = () => {
-    if (user?.profilePhoto) {
+    if (user?.profilePhoto && !imageError) {
       return (
         <Image
           source={{ uri: getProfileImageUrl(user.profilePhoto) }}
           style={styles.profileImage}
           resizeMode="cover"
+          onError={() => setImageError(true)}
         />
       );
     }

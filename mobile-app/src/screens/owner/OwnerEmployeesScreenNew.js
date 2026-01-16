@@ -289,6 +289,8 @@ const DayDetailsModal = ({ visible, date, dayData, employees, onClose }) => {
 
 // Employee Search Results Modal - Shows full employee details and attendance
 const EmployeeAttendanceModal = ({ visible, employee, attendanceRecords, projects, onClose }) => {
+    const [imageError, setImageError] = useState(false);
+
     if (!visible || !employee) return null;
     
     // Sort attendance records
@@ -350,10 +352,11 @@ const EmployeeAttendanceModal = ({ visible, employee, attendanceRecords, project
                 <View style={styles.modalContent}>
                     <View style={styles.modalHeader}>
                         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-                            {employee.profilePhoto ? (
+                            {employee.profilePhoto && !imageError ? (
                                 <Image
                                     source={{ uri: getProfileImageUrl(employee.profilePhoto) }}
                                     style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12, backgroundColor: '#f0f0f0' }}
+                                    onError={() => setImageError(true)}
                                 />
                             ) : (
                                 <View style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12, backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' }}>

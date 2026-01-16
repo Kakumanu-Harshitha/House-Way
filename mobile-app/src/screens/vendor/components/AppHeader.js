@@ -1,17 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import theme from '../../../styles/theme';
 import { getProfileImageUrl } from '../../../utils/api';
 
 export default function AppHeader({ title, onBack, onMenu, onNotifications, user, onProfile }) {
+  const [imageError, setImageError] = useState(false);
+
   const renderProfileImage = () => {
-    if (user?.profilePhoto) {
+    if (user?.profilePhoto && !imageError) {
       return (
         <Image
           source={{ uri: getProfileImageUrl(user.profilePhoto) }}
           style={styles.profileImage}
           resizeMode="cover"
+          onError={() => setImageError(true)}
         />
       );
     }

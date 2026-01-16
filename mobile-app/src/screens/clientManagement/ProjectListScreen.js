@@ -10,17 +10,93 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import WaveHeader from '../../components/clientManagement/WaveHeader';
-import { projectsAPI } from '../../utils/api';
+import { projectsAPI, getProfileImageUrl } from '../../utils/api';
 import { useAttendance } from '../../context/AttendanceContext';
 import BottomNavBar from '../../components/common/BottomNavBar';
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS } from '../../styles/colors';
 
 const { width } = Dimensions.get('window');
+
+const ProjectCard = ({ item, onPress }) => {
+  const [imageError, setImageError] = useState(false);
+
+  const getStatusColor = (status) => {
+    const colors = {
+      planning: COLORS.warning,
+      'in-progress': COLORS.primary,
+      'on-hold': COLORS.textMuted,
+      completed: COLORS.success,
+      cancelled: COLORS.danger,
+    };
+    return colors[status] || COLORS.textMuted;
+  };
+
+  return (
+    <TouchableOpacity
+      style={styles.projectCard}
+      onPress={() => onPress(item)}
+      activeOpacity={0.8}
+    >
+      <View style={styles.projectContent}>
+        <View style={styles.projectHeader}>
+          <Text style={styles.projectTitle} numberOfLines={1}>{item.title}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
+            <View style={[styles.statusDot, { backgroundColor: getStatusColor(item.status) }]} />
+            <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+              {item.status?.replace('-', ' ')}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={styles.projectDescription} numberOfLines={2}>
+          {item.description || 'No description available'}
+        </Text>
+
+        <View style={styles.projectInfo}>
+          <View style={styles.infoItem}>
+            <Feather name="calendar" size={14} color={COLORS.textMuted} />
+            <Text style={styles.infoText}>
+              {new Date(item.createdAt).toLocaleDateString()}
+            </Text>
+          </View>
+
+          {item.budget && (
+            <View style={styles.infoItem}>
+              <Text style={[styles.infoText, { color: COLORS.primary, fontWeight: '700' }]}>
+                ₹{(item.budget.estimated || 0).toLocaleString()}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {item.client && (
+          <View style={styles.clientRow}>
+             {item.client.profilePhoto && !imageError ? (
+                <Image 
+                  source={{ uri: getProfileImageUrl(item.client.profilePhoto) }} 
+                  style={{ width: 16, height: 16, borderRadius: 8 }}
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <Feather name="user" size={12} color={COLORS.textMuted} />
+              )}
+            <Text style={styles.clientName}>
+              {item.client.firstName} {item.client.lastName}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      <Feather name="chevron-right" size={20} color={COLORS.primary} />
+    </TouchableOpacity>
+  );
+};
 
 const ProjectListScreen = ({ navigation, route }) => {
   const { clientId } = route.params || {};
@@ -96,70 +172,7 @@ const ProjectListScreen = ({ navigation, route }) => {
     navigation.navigate('ProjectDetail', { projectId: project._id });
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      planning: COLORS.warning,
-      'in-progress': COLORS.primary,
-      'on-hold': COLORS.textMuted,
-      completed: COLORS.success,
-      cancelled: COLORS.danger,
-    };
-    return colors[status] || COLORS.textMuted;
-  };
 
-  const renderProjectCard = ({ item }) => (
-    <TouchableOpacity
-      style={styles.projectCard}
-      onPress={() => handleProjectPress(item)}
-      activeOpacity={0.8}
-    >
-      <View style={styles.projectContent}>
-        <View style={styles.projectHeader}>
-          <Text style={styles.projectTitle} numberOfLines={1}>{item.title}</Text>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
-            <View style={[styles.statusDot, { backgroundColor: getStatusColor(item.status) }]} />
-            <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-              {item.status?.replace('-', ' ')}
-            </Text>
-          </View>
-        </View>
-
-        <Text style={styles.projectDescription} numberOfLines={2}>
-          {item.description || 'No description available'}
-        </Text>
-
-        {/* Project info */}
-        <View style={styles.projectInfo}>
-          <View style={styles.infoItem}>
-            <Feather name="calendar" size={14} color={COLORS.textMuted} />
-            <Text style={styles.infoText}>
-              {new Date(item.createdAt).toLocaleDateString()}
-            </Text>
-          </View>
-
-          {item.budget && (
-            <View style={styles.infoItem}>
-              <Text style={[styles.infoText, { color: COLORS.primary, fontWeight: '700' }]}>
-                ₹{(item.budget.estimated || 0).toLocaleString()}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Client name */}
-        {item.client && (
-          <View style={styles.clientRow}>
-            <Feather name="user" size={12} color={COLORS.textMuted} />
-            <Text style={styles.clientName}>
-              {item.client.firstName} {item.client.lastName}
-            </Text>
-          </View>
-        )}
-      </View>
-
-      <Feather name="chevron-right" size={20} color={COLORS.primary} />
-    </TouchableOpacity>
-  );
 
   if (loading && projects.length === 0) {
     return (
@@ -183,7 +196,7 @@ const ProjectListScreen = ({ navigation, route }) => {
     <View style={styles.container}>
       <FlatList
         data={projects}
-        renderItem={renderProjectCard}
+        renderItem={({ item }) => <ProjectCard item={item} onPress={handleProjectPress} />}
         keyExtractor={(item) => item._id}
         ListHeaderComponent={
           <WaveHeader

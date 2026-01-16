@@ -771,10 +771,11 @@ const ExecutiveProjectDetailScreen = ({ navigation, route }) => {
                                         onPress={() => handleAssignVendor(vendor._id)}
                                         disabled={assigningVendor}
                                     >
-                                        {vendor.profilePhoto ? (
+                                        {vendor.profilePhoto && !vendorImageErrors[vendor._id] ? (
                                             <Image 
                                                 source={{ uri: getProfileImageUrl(vendor.profilePhoto) }} 
                                                 style={styles.vendorAvatar} 
+                                                onError={() => handleVendorImageError(vendor._id)}
                                             />
                                         ) : (
                                             <View style={styles.vendorAvatar}>

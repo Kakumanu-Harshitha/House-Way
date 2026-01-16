@@ -196,27 +196,22 @@ router.delete('/profile-photo', authenticate, async (req, res) => {
       });
     }
 
-    if (!user.profileImage) {
-      return res.status(400).json({
-        success: false,
-        message: 'No profile photo to delete',
-      });
-    }
-
-    // Delete from GCS
-    try {
-      const oldUrl = user.profileImage;
-      const bucketName = process.env.GCS_BUCKET;
-      const gcsPath = oldUrl.split(`${bucketName}/`)[1];
-      if (gcsPath) {
-        await deleteFromGCS(gcsPath);
-        console.log('🗑️ Deleted profile photo from GCS:', gcsPath);
+    // Delete from GCS if exists
+    if (user.profileImage) {
+      try {
+        const oldUrl = user.profileImage;
+        const bucketName = process.env.GCS_BUCKET;
+        const gcsPath = oldUrl.split(`${bucketName}/`)[1];
+        if (gcsPath) {
+          await deleteFromGCS(gcsPath);
+          console.log('🗑️ Deleted profile photo from GCS:', gcsPath);
+        }
+      } catch (deleteError) {
+        console.log('⚠️ GCS delete error:', deleteError.message);
       }
-    } catch (deleteError) {
-      console.log('⚠️ GCS delete error:', deleteError.message);
     }
 
-    // Clear profileImage field
+    // Always clear profileImage field (idempotent)
     user.profileImage = null;
     await user.save();
 

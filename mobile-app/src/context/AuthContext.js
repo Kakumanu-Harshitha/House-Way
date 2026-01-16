@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
         const user = JSON.parse(storedUser);
         
         // ✅ Ensure profilePhoto exists (frontend compatibility)
-        if (user.profileImage && !user.profilePhoto) {
+        if (user.profileImage && user.profilePhoto === undefined) {
           user.profilePhoto = user.profileImage;
         }
 
@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }) => {
         const { user, token } = response.data;
 
         // ✅ Ensure profilePhoto exists (frontend compatibility)
-        if (user.profileImage && !user.profilePhoto) {
+        if (user.profileImage && user.profilePhoto === undefined) {
           user.profilePhoto = user.profileImage;
         }
 
@@ -160,7 +160,7 @@ export const AuthProvider = ({ children }) => {
         const { user, token } = response.data;
 
         // ✅ Ensure profilePhoto exists (frontend compatibility)
-        if (user.profileImage && !user.profilePhoto) {
+        if (user.profileImage && user.profilePhoto === undefined) {
           user.profilePhoto = user.profileImage;
         }
 
@@ -224,7 +224,7 @@ export const AuthProvider = ({ children }) => {
         const updatedUser = response.data.user;
         
         // ✅ Ensure profilePhoto exists
-        if (updatedUser.profileImage && !updatedUser.profilePhoto) {
+        if (updatedUser.profileImage && updatedUser.profilePhoto === undefined) {
           updatedUser.profilePhoto = updatedUser.profileImage;
         }
 
@@ -247,7 +247,8 @@ export const AuthProvider = ({ children }) => {
   const syncUser = async (userData) => {
     try {
       // ✅ Ensure profilePhoto exists (frontend compatibility)
-      if (userData.profileImage && !userData.profilePhoto) {
+      // Only set if undefined (don't overwrite null/empty if explicitly set)
+      if (userData.profileImage && userData.profilePhoto === undefined) {
         userData.profilePhoto = userData.profileImage;
       }
 

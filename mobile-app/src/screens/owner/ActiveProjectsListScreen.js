@@ -9,7 +9,8 @@ import {
   SafeAreaView,
   StatusBar,
   TextInput,
-  ActivityIndicator
+  ActivityIndicator,
+  Image
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -110,6 +111,7 @@ const ActiveProjectsListScreen = ({ navigation }) => {
   };
 
   const ProjectCard = ({ project }) => {
+    const [imageError, setImageError] = useState(false);
     const statusConfig = getStatusConfig(project.status, project.priority);
     const progress = calculateProgress(project);
     const clientName = getClientDisplayName(project.client) || 'N/A';
@@ -133,7 +135,18 @@ const ActiveProjectsListScreen = ({ navigation }) => {
           </View>
         </View>
 
-        <Text style={styles.clientText}>Client: {clientName}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            {project.client?.profilePhoto && !imageError ? (
+                <Image
+                    source={{ uri: getProfileImageUrl(project.client.profilePhoto) }}
+                    style={{ width: 20, height: 20, borderRadius: 10, marginRight: 8 }}
+                    onError={() => setImageError(true)}
+                />
+            ) : (
+                <Feather name="user" size={16} color="#666" style={{ marginRight: 8 }} />
+            )}
+            <Text style={styles.clientText}>Client: {clientName}</Text>
+        </View>
         
         <View style={styles.progressContainer}>
           <Text style={styles.progressLabel}>Progress: {progress}%</Text>

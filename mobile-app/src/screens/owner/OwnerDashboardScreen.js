@@ -41,6 +41,7 @@ const OwnerDashboardScreen = ({ navigation }) => {
   const [teamStats, setTeamStats] = useState({});
   const [recentActivity, setRecentActivity] = useState([]);
   const [stats, setStats] = useState({ onTrack: 0, atRisk: 0, delayed: 0 });
+  const [imageErrors, setImageErrors] = useState({});
 
   // Modal States
   const [addUserVisible, setAddUserVisible] = useState(false);
@@ -1121,7 +1122,7 @@ const OwnerDashboardScreen = ({ navigation }) => {
             style={styles.clientCard}
             onPress={() => navigation.navigate('Clients', { clientId: client._id })}
           >
-            {client.profilePhoto ? (
+            {client.profilePhoto && !imageErrors[client._id] ? (
                 <Image
                     source={{ uri: getProfileImageUrl(client.profilePhoto) }}
                     style={{
@@ -1131,6 +1132,7 @@ const OwnerDashboardScreen = ({ navigation }) => {
                         marginRight: 12,
                         backgroundColor: '#f0f0f0'
                     }}
+                    onError={() => setImageErrors(prev => ({ ...prev, [client._id]: true }))}
                 />
             ) : (
                 <View style={styles.clientAvatar}>

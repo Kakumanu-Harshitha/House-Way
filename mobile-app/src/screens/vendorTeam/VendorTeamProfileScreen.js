@@ -220,11 +220,11 @@ export default function VendorTeamProfileScreen({ navigation }) {
             console.log('API response:', uploadResponse);
 
             if (uploadResponse.success) {
-                const newImage = uploadResponse.data.profilePhoto || uploadResponse.data.profileImage;
+                const newImage = uploadResponse.data.profilePhoto;
 
                 setProfilePhoto(newImage);
                 if (syncUser) {
-                    await syncUser({ ...user, profilePhoto: newImage });
+                    await syncUser({ ...user, profilePhoto: newImage, profileImage: newImage });
                 }
                 showToast('Profile photo updated!', 'success');
             } else {
@@ -270,7 +270,7 @@ export default function VendorTeamProfileScreen({ navigation }) {
                 setProfilePhoto(null);
                 if (syncUser) {
                     console.log('Syncing user with null profilePhoto');
-                    await syncUser({ ...user, profilePhoto: null });
+                    await syncUser({ ...user, profilePhoto: null, profileImage: null });
                 }
                 showToast('Profile photo removed', 'success');
             } else {

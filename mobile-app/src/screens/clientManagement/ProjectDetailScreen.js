@@ -34,6 +34,7 @@ const ProjectDetailScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('Overview');
+  const [clientImageError, setClientImageError] = useState(false);
 
   // Payment schedule state
   const [paymentSchedule, setPaymentSchedule] = useState([]);
@@ -460,10 +461,11 @@ const ProjectDetailScreen = ({ navigation, route }) => {
               style={styles.clientInfo}
               onPress={() => navigation.navigate('ClientProfile', { clientId: project.client._id })}
             >
-              {project.client.profilePhoto ? (
+              {project.client.profilePhoto && !clientImageError ? (
                 <Image
                   source={{ uri: getProfileImageUrl(project.client.profilePhoto) }}
                   style={{ width: 20, height: 20, borderRadius: 10, marginRight: 6 }}
+                  onError={() => setClientImageError(true)}
                 />
               ) : (
                 <Feather name="user" size={14} color={COLORS.textMuted} style={{ marginRight: 6 }} />
@@ -1267,6 +1269,9 @@ const TeamTab = ({ project, navigation, onRefresh, currentUser }) => {
   const [loadingEmployees, setLoadingEmployees] = useState(false);
   const [assigning, setAssigning] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [designerImageError, setDesignerImageError] = useState(false);
+  const [executiveImageError, setExecutiveImageError] = useState(false);
+  const [employeeImageErrors, setEmployeeImageErrors] = useState({});
 
   // Designer is the current user, executive is the assigned employee (different from designer)
   const designerEmployee = currentUser;
@@ -1376,10 +1381,11 @@ const TeamTab = ({ project, navigation, onRefresh, currentUser }) => {
 
       {designerEmployee && (
         <View style={styles.teamMember}>
-          {designerEmployee.profilePhoto ? (
+          {designerEmployee.profilePhoto && !designerImageError ? (
             <Image 
               source={{ uri: getProfileImageUrl(designerEmployee.profilePhoto) }} 
               style={styles.teamAvatar} 
+              onError={() => setDesignerImageError(true)}
             />
           ) : (
             <View style={styles.teamAvatar}>
@@ -1409,10 +1415,11 @@ const TeamTab = ({ project, navigation, onRefresh, currentUser }) => {
 
       {executiveEmployee ? (
         <View style={styles.teamMember}>
-          {executiveEmployee.profilePhoto ? (
+          {executiveEmployee.profilePhoto && !executiveImageError ? (
             <Image 
               source={{ uri: getProfileImageUrl(executiveEmployee.profilePhoto) }} 
               style={styles.teamAvatar} 
+              onError={() => setExecutiveImageError(true)}
             />
           ) : (
             <View style={styles.teamAvatar}>
@@ -1489,10 +1496,11 @@ const TeamTab = ({ project, navigation, onRefresh, currentUser }) => {
                     onPress={() => handleAssignEmployee(emp._id)}
                     disabled={assigning}
                   >
-                    {emp.profilePhoto ? (
+                    {emp.profilePhoto && !employeeImageErrors[emp._id] ? (
                       <Image 
                         source={{ uri: getProfileImageUrl(emp.profilePhoto) }} 
                         style={styles.teamAvatar} 
+                        onError={() => setEmployeeImageErrors(prev => ({ ...prev, [emp._id]: true }))}
                       />
                     ) : (
                       <View style={styles.teamAvatar}>

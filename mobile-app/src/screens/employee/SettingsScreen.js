@@ -27,6 +27,7 @@ const SettingsScreen = ({ navigation }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [checkingOut, setCheckingOut] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [imageError, setImageError] = useState(false);
 
     useEffect(() => {
         loadStats();
@@ -148,10 +149,11 @@ const SettingsScreen = ({ navigation }) => {
                     <View style={styles.profileSummary}>
                         <View style={styles.avatarContainer}>
                             <View style={styles.avatar}>
-                                {user?.profilePhoto ? (
+                                {user?.profilePhoto && !imageError ? (
                                     <Image
                                         source={{ uri: getProfileImageUrl(user.profilePhoto) }}
                                         style={styles.avatarImage}
+                                        onError={() => setImageError(true)}
                                     />
                                 ) : (
                                     <Text style={styles.avatarText}>

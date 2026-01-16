@@ -18,6 +18,7 @@ const COLORS = {
 export default function SettingsScreen() {
   const navigation = useNavigation();
   const { user, logout } = useAuth();
+  const [imageError, setImageError] = useState(false);
 
   const handleLogout = () => {
     if (Platform.OS === 'web') {

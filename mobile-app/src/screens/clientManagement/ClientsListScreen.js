@@ -21,6 +21,74 @@ import { COLORS } from '../../styles/colors';
 
 const { width } = Dimensions.get('window');
 
+const ClientCard = ({ item, projects, onPress, getAddress }) => {
+  const [imageError, setImageError] = useState(false);
+  
+  return (
+    <TouchableOpacity style={styles.clientCard} onPress={() => onPress(item)}>
+      <View style={styles.cardHeader}>
+        <View style={styles.avatarContainer}>
+          {item.profilePhoto && !imageError ? (
+            <Image
+              source={{ uri: getProfileImageUrl(item.profilePhoto) }}
+              style={styles.avatarImage}
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <Text style={styles.avatarText}>
+              {item.firstName?.[0] || item.email?.[0] || '?'}
+            </Text>
+          )}
+        </View>
+        
+        <View style={styles.clientInfo}>
+          <Text style={styles.clientName}>
+            {item.firstName} {item.lastName}
+          </Text>
+          <Text style={styles.clientIdBadge}>ID: {item._id?.slice(-6).toUpperCase()}</Text>
+          <Text style={styles.clientEmail}>{item.email}</Text>
+        </View>
+      </View>
+      
+      <View style={styles.divider} />
+      
+      <View style={styles.detailsRow}>
+        <Feather name="map-pin" size={14} color={COLORS.textMuted} />
+        <Text style={styles.detailText} numberOfLines={1}>
+          {getAddress(item)}
+        </Text>
+      </View>
+      
+      <View style={styles.detailsRow}>
+        <Feather name="phone" size={14} color={COLORS.textMuted} />
+        <Text style={styles.detailText}>
+          {item.phone || 'No phone'}
+        </Text>
+      </View>
+
+      {projects.length > 0 && (
+        <View style={styles.projectsSection}>
+          <Text style={styles.projectsLabel}>Active Projects ({projects.length})</Text>
+          {projects.slice(0, 2).map(project => (
+            <View key={project._id} style={styles.projectTag}>
+              <Feather name="folder" size={12} color={COLORS.primary} />
+              <Text style={styles.projectName} numberOfLines={1}>{project.title}</Text>
+            </View>
+          ))}
+          {projects.length > 2 && (
+            <Text style={styles.moreProjects}>+ {projects.length - 2} more projects</Text>
+          )}
+        </View>
+      )}
+
+      <TouchableOpacity style={styles.viewButton} onPress={() => onPress(item)}>
+        <Text style={styles.viewButtonText}>View Details</Text>
+        <Feather name="arrow-right" size={16} color="#1a1a1a" />
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+};
+
 const ClientsListScreen = ({ navigation }) => {
   const { user, isAuthenticated } = useAuth();
   const { isCheckedIn } = useAttendance();
@@ -149,84 +217,14 @@ const ClientsListScreen = ({ navigation }) => {
     return parts.length > 0 ? parts.join(', ') : 'No address';
   };
 
-  const renderClientCard = ({ item }) => {
-    const projects = clientProjects[item._id] || [];
-    const activeProjects = projects.filter(p => p.status !== 'completed');
-
-    return (
-      <TouchableOpacity
-        style={styles.clientCard}
-        onPress={() => handleClientPress(item)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.cardHeader}>
-        {item.profilePhoto ? (
-          <Image 
-            source={{ uri: getProfileImageUrl(item.profilePhoto) }} 
-            style={styles.avatarImage}
-            defaultSource={null}
-            onError={() => {
-              // Fallback to initials if image fails
-              // We can't easily switch to the View branch here without state
-              // But we can try to force a re-render or just let the Image fail gracefully
-              // Actually, better to use a stateful component or just accept that if it fails, it fails.
-              // However, the standard we used in other files is to use a state variable 'imageError'.
-              // Since this is a FlatList item, using a separate component for the avatar is better to handle state.
-            }}
-          />
-        ) : (
-            <View style={styles.avatarContainer}>
-              <Text style={styles.avatarText}>
-                {item.firstName?.charAt(0)}{item.lastName?.charAt(0)}
-              </Text>
-            </View>
-          )}
-          <View style={styles.clientInfo}>
-            <Text style={styles.clientName}>{item.firstName} {item.lastName}</Text>
-            {item.clientId && (
-              <Text style={styles.clientIdBadge}>{item.clientId}</Text>
-            )}
-            <Text style={styles.clientEmail}>{item.email}</Text>
-          </View>
-          <Feather name="chevron-right" size={22} color={COLORS.textMuted} />
-        </View>
-
-        <View style={styles.divider} />
-
-        <View style={styles.detailsRow}>
-          <Feather name="mail" size={14} color={COLORS.textMuted} />
-          <Text style={styles.detailText}>{item.email || 'No email'}</Text>
-        </View>
-
-        <View style={styles.detailsRow}>
-          <Feather name="map-pin" size={14} color={COLORS.textMuted} />
-          <Text style={styles.detailText} numberOfLines={1}>{getClientAddress(item)}</Text>
-        </View>
-
-        <View style={styles.detailsRow}>
-          <Feather name="phone" size={14} color={COLORS.textMuted} />
-          <Text style={styles.detailText}>{item.phone || 'No phone'}</Text>
-        </View>
-
-        {activeProjects.length > 0 && (
-          <View style={styles.projectsSection}>
-            <Text style={styles.projectsLabel}>Active Projects ({activeProjects.length})</Text>
-            {activeProjects.slice(0, 2).map(project => (
-              <View key={project._id} style={styles.projectTag}>
-                <Feather name="briefcase" size={12} color={COLORS.primary} />
-                <Text style={styles.projectName} numberOfLines={1}>
-                  {project.projectId || 'N/A'} - {project.title}
-                </Text>
-              </View>
-            ))}
-            {activeProjects.length > 2 && (
-              <Text style={styles.moreProjects}>+{activeProjects.length - 2} more</Text>
-            )}
-          </View>
-        )}
-      </TouchableOpacity>
-    );
-  };
+  const renderClientCard = ({ item }) => (
+    <ClientCard 
+      item={item} 
+      projects={clientProjects[item._id] || []} 
+      onPress={handleClientPress}
+      getAddress={getClientAddress}
+    />
+  );
 
   if (loading && clients.length === 0) {
     return (

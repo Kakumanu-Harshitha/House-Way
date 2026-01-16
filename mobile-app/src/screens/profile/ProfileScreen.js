@@ -201,7 +201,7 @@ const ProfileScreen = ({ navigation }) => {
       console.log('Upload response:', uploadResponse);
       
       if (uploadResponse.success) {
-        const newImage = uploadResponse.data.profileImage;
+        const newImage = uploadResponse.data.profilePhoto;
         
         console.log('Updating profile image state:', newImage);
         setProfilePhoto(newImage);

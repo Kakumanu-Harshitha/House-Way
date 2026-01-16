@@ -53,14 +53,15 @@ export default function VendorProfile({ navigation }) {
             specialization: userData.vendorDetails?.specialization || [],
         });
 
-        const imageUri = userData.profilePhoto || userData.profileImage || null;
+        const imageUri = userData.profilePhoto || null;
         setProfilePhoto(imageUri);
 
         if (syncUser) {
-          if (imageUri) {
-             userData.profilePhoto = imageUri;
+          const updatedUser = { ...userData };
+          if (imageUri && !updatedUser.profilePhoto) {
+             updatedUser.profilePhoto = imageUri;
           }
-          await syncUser(userData);
+          await syncUser(updatedUser);
         }
       }
     } catch (error) {
@@ -237,7 +238,7 @@ export default function VendorProfile({ navigation }) {
       console.log('API response:', uploadResponse);
 
       if (uploadResponse.success) {
-        const newImage = uploadResponse.data.profileImage;
+        const newImage = uploadResponse.data.profilePhoto;
         
         // Update user context immediately
         updateUser({

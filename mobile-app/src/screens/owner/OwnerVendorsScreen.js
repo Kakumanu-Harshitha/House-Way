@@ -495,14 +495,14 @@ const OwnerVendorsScreen = ({ navigation }) => {
                 return vendorName.includes(query) || companyName.includes(query);
               })
               .map((vendor) => (
-              <VendorListItem
-                key={vendor._id}
-                vendor={vendor}
-                pendingCount={getVendorPendingCount(vendor._id)}
-                ordersCount={getVendorOrdersCount(vendor._id)}
-                onPress={() => handleVendorPress(vendor)}
-              />
-            ))}
+                <VendorListItem
+                  key={vendor._id}
+                  vendor={vendor}
+                  pendingCount={getVendorPendingCount(vendor._id)}
+                  ordersCount={getVendorOrdersCount(vendor._id)}
+                  onPress={() => handleVendorPress(vendor)}
+                />
+              ))}
             {vendors.length === 0 && <Text style={styles.emptyText}>No vendors found</Text>}
             {vendors.length > 0 && searchQuery.trim() && vendors.filter(v => {
               const query = searchQuery.toLowerCase();

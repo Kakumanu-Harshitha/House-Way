@@ -50,6 +50,8 @@ const AdminNavbar = ({
 }) => {
   const { user, logout } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
+  const [menuImageError, setMenuImageError] = useState(false);
+  const [navImageError, setNavImageError] = useState(false);
   const slideAnim = useState(new Animated.Value(0))[0];
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -197,14 +199,14 @@ const AdminNavbar = ({
                   styles.avatar,
                   {
                     backgroundColor:
-                      user?.profilePhoto ? 'transparent' : (effectiveTextColor === '#ffffff'
+                      user?.profilePhoto && !navImageError ? 'transparent' : (effectiveTextColor === '#ffffff'
                         ? 'rgba(255,255,255,0.3)'
                         : 'rgba(0,0,0,0.1)'),
                     overflow: 'hidden'
                   },
                 ]}
               >
-                {user?.profilePhoto ? (
+                {user?.profilePhoto && !navImageError ? (
                   <Image
                     source={{ 
                       uri: getProfileImageUrl(user.profilePhoto)
@@ -214,6 +216,7 @@ const AdminNavbar = ({
                       height: 32,
                       borderRadius: 16,
                     }}
+                    onError={() => setNavImageError(true)}
                   />
                 ) : (
                   <Text style={[styles.avatarText, { color: effectiveTextColor }]}>
@@ -284,7 +287,7 @@ const AdminNavbar = ({
           >
             {/* Menu Header */}
             <View style={styles.menuHeader}>
-              {user?.profilePhoto ? (
+              {user?.profilePhoto && !menuImageError ? (
                 <Image
                   source={{ 
                     uri: getProfileImageUrl(user.profilePhoto) 
@@ -295,6 +298,7 @@ const AdminNavbar = ({
                     borderRadius: 25,
                     marginRight: 12
                   }}
+                  onError={() => setMenuImageError(true)}
                 />
               ) : (
                 <View

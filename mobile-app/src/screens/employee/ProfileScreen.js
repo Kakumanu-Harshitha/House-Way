@@ -329,11 +329,12 @@ const ProfileScreen = ({ navigation, route }) => {
             console.log('API response:', uploadResponse);
 
             if (uploadResponse.success) {
-                const newImage = uploadResponse.data.profileImage;
+                const newImage = uploadResponse.data.profilePhoto;
 
                 setProfilePhoto(newImage);
                 if (syncUser) {
-                    await syncUser({ ...user, profilePhoto: newImage });
+                    // Update both fields to ensure consistency across app
+                    await syncUser({ ...user, profilePhoto: newImage, profileImage: newImage });
                 }
                 showAlert('Success', 'Profile photo updated successfully!');
             } else {
@@ -383,7 +384,7 @@ const ProfileScreen = ({ navigation, route }) => {
                 setProfilePhoto(null);
                 if (syncUser) {
                     console.log('Syncing user with null profilePhoto');
-                    await syncUser({ ...user, profilePhoto: null });
+                    await syncUser({ ...user, profilePhoto: null, profileImage: null });
                 }
                 showAlert('Success', 'Profile photo deleted');
             } else {

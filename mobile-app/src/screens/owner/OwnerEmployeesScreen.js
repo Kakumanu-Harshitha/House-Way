@@ -355,10 +355,12 @@ const EmployeeDetailModal = ({ visible, employee, onClose }) => {
     const [attendance, setAttendance] = useState(null);
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [imageError, setImageError] = useState(false);
 
     useEffect(() => {
         if (visible && employee) {
             fetchEmployeeDetails();
+            setImageError(false); // Reset error state when modal opens for a new employee
         }
     }, [visible, employee]);
 
@@ -416,6 +418,22 @@ const EmployeeDetailModal = ({ visible, employee, onClose }) => {
                     </View>
                 ) : (
                     <ScrollView style={styles.modalBody}>
+                        <View style={styles.profileHeader}>
+                            {employee.profilePhoto && !imageError ? (
+                                <Image
+                                    source={{ uri: getProfileImageUrl(employee.profilePhoto) }}
+                                    style={styles.largeAvatar}
+                                    onError={() => setImageError(true)}
+                                />
+                            ) : (
+                                <View style={[styles.largeAvatar, styles.avatarPlaceholder]}>
+                                    <Text style={styles.largeAvatarText}>
+                                        {employee.firstName?.charAt(0)}{employee.lastName?.charAt(0)}
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+
                         <View style={styles.detailSection}>
                             <Text style={styles.detailLabel}>ROLE</Text>
                             <Text style={styles.detailValue}>
@@ -996,6 +1014,32 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#212529',
         marginBottom: 4,
+    },
+    profileHeader: {
+        alignItems: 'center',
+        paddingVertical: 20,
+        backgroundColor: '#f8f9fa',
+        marginHorizontal: -20,
+        marginTop: -16,
+        marginBottom: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e9ecef',
+    },
+    largeAvatar: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: '#f0f0f0',
+    },
+    avatarPlaceholder: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#ffc107',
+    },
+    largeAvatarText: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        color: '#fff',
     },
     actionButtons: {
         flexDirection: 'row',

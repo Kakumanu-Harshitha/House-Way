@@ -14,7 +14,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useAttendance } from '../../context/AttendanceContext';
-import { projectsAPI } from '../../utils/api';
+import { projectsAPI, getProfileImageUrl } from '../../utils/api';
 import ExecutiveBottomNavBar from '../../components/common/ExecutiveBottomNavBar';
 import CommonHeader from '../../components/CommonHeader';
 import theme from '../../styles/theme';
