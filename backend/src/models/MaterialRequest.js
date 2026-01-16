@@ -241,26 +241,24 @@ materialRequestSchema.pre('save', function (next) {
 materialRequestSchema.statics.findByProject = function (projectId) {
   return this.find({ project: projectId })
     .populate('project requestedBy assignedVendors.vendor assignedVendors.assignedBy')
-    .populate('requestedBy', 'firstName lastName email profileImage')
-    .populate('assignedVendors.vendor', 'firstName lastName email vendorDetails profileImage')
-    .populate('assignedVendors.assignedBy', 'firstName lastName profileImage');
+    .populate('requestedBy', 'firstName lastName email profilePhoto')
+    .populate('assignedVendors.vendor', 'firstName lastName email vendorDetails profilePhoto')
+    .populate('assignedVendors.assignedBy', 'firstName lastName profilePhoto');
 };
 
 // Static method to find requests by vendor
 materialRequestSchema.statics.findByVendor = function (vendorId) {
   return this.find({ 'assignedVendors.vendor': vendorId })
     .populate('project requestedBy assignedVendors.vendor assignedVendors.assignedBy')
-    .populate('requestedBy', 'firstName lastName email profileImage')
-    .populate('assignedVendors.vendor', 'firstName lastName email vendorDetails profileImage')
-    .populate('assignedVendors.assignedBy', 'firstName lastName profileImage');
+    .populate('requestedBy', 'firstName lastName email profilePhoto')
+    .populate('assignedVendors.assignedBy', 'firstName lastName profilePhoto');
 };
 
 // Static method to find pending requests
 materialRequestSchema.statics.findPending = function () {
   return this.find({ status: 'pending' })
-    .populate('project requestedBy assignedVendors.vendor')
-    .populate('requestedBy', 'firstName lastName email profileImage')
-    .populate('assignedVendors.vendor', 'firstName lastName email vendorDetails profileImage');
+    .populate('project requestedBy')
+    .populate('requestedBy', 'firstName lastName email profilePhoto');
 };
 
 // Instance method to assign vendor

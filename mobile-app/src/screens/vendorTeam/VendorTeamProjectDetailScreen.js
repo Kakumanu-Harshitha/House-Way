@@ -17,7 +17,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../context/AuthContext';
-import { projectsAPI, materialRequestsAPI, usersAPI } from '../../utils/api';
+import { projectsAPI, materialRequestsAPI, usersAPI, getProfileImageUrl } from '../../utils/api';
 import theme from '../../styles/theme';
 
 const MATERIAL_CATEGORIES = [
@@ -339,13 +339,9 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                 {project?.assignedEmployees && project.assignedEmployees.length > 0 ? (
                     project.assignedEmployees.map((employee, index) => (
                         <View key={employee._id || index} style={styles.teamMember}>
-                            {employee.profileImage ? (
+                            {employee.profilePhoto ? (
                                 <Image 
-                                    source={{ 
-                                        uri: employee.profileImage.includes('?') 
-                                            ? `${employee.profileImage}&t=${new Date().getTime()}` 
-                                            : `${employee.profileImage}?t=${new Date().getTime()}` 
-                                    }} 
+                                    source={{ uri: getProfileImageUrl(employee.profilePhoto) }} 
                                     style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]} 
                                 />
                             ) : (
@@ -374,13 +370,9 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                         <View style={{ height: 8 }} />
                         {project.designTeam.map((designer, index) => (
                             <View key={designer._id || index} style={styles.teamMember}>
-                                {designer.profileImage ? (
+                                {designer.profilePhoto ? (
                                     <Image 
-                                        source={{ 
-                                            uri: designer.profileImage.includes('?') 
-                                                ? `${designer.profileImage}&t=${new Date().getTime()}` 
-                                                : `${designer.profileImage}?t=${new Date().getTime()}` 
-                                        }} 
+                                        source={{ uri: getProfileImageUrl(designer.profilePhoto) }} 
                                         style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]} 
                                     />
                                 ) : (
@@ -405,13 +397,9 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                         <View style={{ height: 8 }} />
                         {project.assignedVendors.map((vendor, index) => (
                             <View key={vendor._id || index} style={styles.teamMember}>
-                                {vendor.profileImage ? (
+                                {vendor.profilePhoto ? (
                                     <Image 
-                                        source={{ 
-                                            uri: vendor.profileImage.includes('?') 
-                                                ? `${vendor.profileImage}&t=${new Date().getTime()}` 
-                                                : `${vendor.profileImage}?t=${new Date().getTime()}` 
-                                        }} 
+                                        source={{ uri: getProfileImageUrl(vendor.profilePhoto) }} 
                                         style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]} 
                                     />
                                 ) : (
@@ -441,9 +429,9 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                 <Text style={styles.cardTitle}>Executive Team</Text>
                 {project?.assignedEmployee ? (
                     <View style={styles.teamMember}>
-                        {project.assignedEmployee.profileImage ? (
+                        {project.assignedEmployee.profilePhoto ? (
                             <Image 
-                                source={{ uri: project.assignedEmployee.profileImage }} 
+                                source={{ uri: getProfileImageUrl(project.assignedEmployee.profilePhoto) }} 
                                 style={styles.avatar} 
                             />
                         ) : (
@@ -469,13 +457,9 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                 {project?.designTeam && project.designTeam.length > 0 ? (
                     project.designTeam.map((member, index) => (
                         <View key={index} style={styles.teamMember}>
-                            {member.profileImage ? (
+                            {member.profilePhoto ? (
                                 <Image 
-                                    source={{ 
-                                        uri: member.profileImage.includes('?') 
-                                            ? `${member.profileImage}&t=${new Date().getTime()}` 
-                                            : `${member.profileImage}?t=${new Date().getTime()}` 
-                                    }} 
+                                    source={{ uri: getProfileImageUrl(member.profilePhoto) }} 
                                     style={styles.avatar} 
                                 />
                             ) : (
@@ -517,12 +501,10 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                                 style={styles.vendorItem}
                                 onPress={() => setExpandedVendor(expandedVendor === vendor._id ? null : vendor._id)}
                             >
-                                {vendor.profileImage ? (
+                                {vendor.profilePhoto ? (
                                     <Image 
                                         source={{ 
-                                            uri: vendor.profileImage.includes('?') 
-                                                ? `${vendor.profileImage}&t=${new Date().getTime()}` 
-                                                : `${vendor.profileImage}?t=${new Date().getTime()}` 
+                                            uri: getProfileImageUrl(vendor.profilePhoto) 
                                         }} 
                                         style={styles.avatar} 
                                     />
@@ -694,9 +676,9 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                             style={{ padding: 8 }}
                             onPress={() => navigation.navigate('VendorTeamProfile')}
                         >
-                            {user?.profileImage ? (
+                            {user?.profilePhoto ? (
                                 <Image 
-                                    source={{ uri: user.profileImage }} 
+                                    source={{ uri: getProfileImageUrl(user.profilePhoto) }} 
                                     style={{ width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' }} 
                                 />
                             ) : (

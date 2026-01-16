@@ -14,7 +14,7 @@ import {
   Image,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { authAPI, usersAPI, serviceRequestsAPI } from '../../utils/api';
+import { authAPI, usersAPI, serviceRequestsAPI, getProfileImageUrl } from '../../utils/api';
 import theme from '../../styles/theme';
 import { StandardCard } from '../../components/StandardCard';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
@@ -22,14 +22,14 @@ import ChangePasswordModal from '../../components/ChangePasswordModal';
 // import PermissionsStatus from '../../components/PermissionsStatus';
 // Note: react-native-image-picker is for bare React Native. For Expo, use expo-image-picker instead
 // import { launchImageLibrary, launchCamera, MediaType } from 'react-native-image-picker';
-// import * as ImagePicker from 'expo-image-picker';
-// import {
-//   requestCameraPermission,
-//   requestMediaLibraryPermission,
-//   requestAllImagePermissions,
-//   showPermissionExplanation,
-//   handlePermissionDenied
-// } from '../../utils/permissions';
+import * as ImagePicker from 'expo-image-picker';
+import {
+  requestCameraPermission,
+  requestMediaLibraryPermission,
+  requestAllImagePermissions,
+  showPermissionExplanation,
+  handlePermissionDenied
+} from '../../utils/permissions';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, updateUser, syncUser, logout } = useAuth();
@@ -38,7 +38,7 @@ const ProfileScreen = ({ navigation }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showImagePicker, setShowImagePicker] = useState(false);
-  const [profileImage, setProfileImage] = useState(user?.profileImage || null);
+  const [profilePhoto, setProfilePhoto] = useState(user?.profilePhoto || null);
 
   // Profile form state
   const [profileData, setProfileData] = useState({
@@ -58,7 +58,7 @@ const ProfileScreen = ({ navigation }) => {
         phone: user.phone || '',
         address: user.address || '',
       });
-      setProfileImage(user.profileImage || null);
+      setProfilePhoto(user.profilePhoto || null);
     }
 
     // Request permissions on component mount for mobile - temporarily disabled
@@ -71,7 +71,21 @@ const ProfileScreen = ({ navigation }) => {
   //   // Permissions functionality temporarily disabled
   // };
 
+  const showAlert = (title, message) => {
+    if (Platform.OS === 'web') {
+      window.alert(`${title}: ${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
   const handleImagePicker = () => {
+    if (Platform.OS === 'web') {
+      // On web, directly open file picker as it handles both camera/gallery on mobile web
+      handleImageSelection('gallery');
+      return;
+    }
+
     Alert.alert(
       'Profile Photo Options',
       'Choose how you want to update your profile photo',
@@ -88,7 +102,7 @@ const ProfileScreen = ({ navigation }) => {
           text: '👨‍💼 Request Professional Photo',
           onPress: () => handleProfessionalPhotoRequest()
         },
-        ...(profileImage ? [{
+        ...(profilePhoto ? [{
           text: '🗑️ Remove Photo',
           onPress: () => handleRemoveImage(),
           style: 'destructive'
@@ -180,22 +194,26 @@ const ProfileScreen = ({ navigation }) => {
 
   const uploadPhoto = async (formData) => {
     try {
+      console.log('Starting profile photo upload...');
       setIsLoading(true);
+      console.log('Calling usersAPI.uploadProfilePhoto...');
       const uploadResponse = await usersAPI.uploadProfilePhoto(formData);
+      console.log('Upload response:', uploadResponse);
       
       if (uploadResponse.success) {
-        const timestamp = new Date().getTime();
         const newImage = uploadResponse.data.profileImage;
-        const imageWithTimestamp = newImage.includes('?') ? `${newImage}&t=${timestamp}` : `${newImage}?t=${timestamp}`;
         
-        setProfileImage(imageWithTimestamp);
+        console.log('Updating profile image state:', newImage);
+        setProfilePhoto(newImage);
         
         if (syncUser) {
-           await syncUser({ ...user, profileImage: imageWithTimestamp });
+           console.log('Syncing user context...');
+           await syncUser({ ...user, profilePhoto: newImage });
         }
         
         Alert.alert('Success', 'Profile photo updated successfully!');
       } else {
+        console.error('Upload failed:', uploadResponse);
         Alert.alert('Error', uploadResponse.message || 'Failed to upload photo');
       }
     } catch (error) {
@@ -207,6 +225,7 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleImageSelection = async (source) => {
+    console.log('handleImageSelection called with:', source);
     try {
       setIsLoading(true);
 
@@ -229,14 +248,14 @@ const ProfileScreen = ({ navigation }) => {
 
           // Validate file type
           if (!file.type.startsWith('image/')) {
-            Alert.alert('Error', 'Please select an image file');
+            showAlert('Error', 'Please select an image file');
             setIsLoading(false);
             return;
           }
 
           // Validate file size (5MB limit)
           if (file.size > 5 * 1024 * 1024) {
-            Alert.alert('Error', 'Image size should be less than 5MB');
+            showAlert('Error', 'Image size should be less than 5MB');
             setIsLoading(false);
             return;
           }
@@ -303,9 +322,9 @@ const ProfileScreen = ({ navigation }) => {
               setIsLoading(false);
           }
         } catch (error) {
-          console.error('Mobile picker error:', error);
+          console.error('Image picker error:', error);
+          showAlert('Error', 'Failed to pick image');
           setIsLoading(false);
-          Alert.alert('Error', 'Failed to select image');
         }
       }
     } catch (error) {
@@ -322,25 +341,27 @@ const ProfileScreen = ({ navigation }) => {
 
   const handleRemoveImage = async () => {
     try {
+      console.log('Removing profile photo...');
       setIsLoading(true);
 
       const response = await usersAPI.deleteProfilePhoto();
+      console.log('Remove photo response:', response);
 
       if (response.success) {
-        setProfileImage(null);
+        setProfilePhoto(null);
 
         if (syncUser && user) {
-          await syncUser({ ...user, profileImage: null });
-          Alert.alert('Success', 'Profile photo removed successfully!');
-        } else {
-          Alert.alert('Success', 'Profile photo removed successfully!');
+          console.log('Syncing user with null profilePhoto');
+          await syncUser({ ...user, profilePhoto: null });
         }
+        showAlert('Success', 'Profile photo removed successfully!');
       } else {
-        Alert.alert('Error', response.message || 'Failed to remove profile photo');
+        console.error('Remove photo failed:', response);
+        showAlert('Error', response.message || 'Failed to remove profile photo');
       }
     } catch (error) {
       console.error('Remove photo error:', error);
-      Alert.alert('Error', 'Failed to remove profile photo');
+      showAlert('Error', 'Failed to remove profile photo');
     } finally {
       setIsLoading(false);
     }
@@ -410,13 +431,8 @@ const ProfileScreen = ({ navigation }) => {
       const response = await usersAPI.getUserById(user._id);
       if (response.success) {
         const userData = response.data.user;
-        // Add cache busting to profile image URL to ensure freshness
-        const timestamp = new Date().getTime();
-        const profileImageUrl = userData.profileImage ? 
-          (userData.profileImage.includes('?') ? `${userData.profileImage}&t=${timestamp}` : `${userData.profileImage}?t=${timestamp}`) 
-          : null;
           
-        setProfileImage(profileImageUrl);
+        setProfilePhoto(userData.profilePhoto || null);
         setProfileData({
           firstName: userData.firstName || '',
           lastName: userData.lastName || '',
@@ -426,13 +442,10 @@ const ProfileScreen = ({ navigation }) => {
         });
         
         // Update context only if data changed significantly (avoid loops)
-        if (user.profileImage !== userData.profileImage || 
+        if (user.profilePhoto !== userData.profilePhoto || 
             user.firstName !== userData.firstName || 
             user.lastName !== userData.lastName) {
             if (syncUser) {
-                if (profileImageUrl) {
-                    userData.profileImage = profileImageUrl;
-                }
                 syncUser(userData);
             }
         }
@@ -514,21 +527,29 @@ const ProfileScreen = ({ navigation }) => {
                 activeOpacity={0.8}
               >
                 <View style={styles.avatar}>
-                  {profileImage ? (
+                  {profilePhoto ? (
                     <Image
-                      source={{ uri: profileImage }}
+                      source={{ uri: getProfileImageUrl(profilePhoto) }}
                       style={styles.avatarImage}
-                      onError={() => setProfileImage(null)}
+                      onError={() => setProfilePhoto(null)}
                     />
                   ) : (
                     <Text style={styles.avatarText}>
-                      {user?.firstName?.[0]}{user?.lastName?.[0]}
+                      {profileData.firstName?.[0]}{profileData.lastName?.[0]}
                     </Text>
                   )}
                 </View>
                 <View style={styles.cameraButton}>
                   <Text style={styles.cameraIcon}>📷</Text>
                 </View>
+                {profilePhoto && (
+                  <TouchableOpacity 
+                    style={styles.deleteButton} 
+                    onPress={handleRemoveImage}
+                  >
+                    <Text style={{color: '#FFFFFF', fontSize: 14}}>✕</Text>
+                  </TouchableOpacity>
+                )}
               </TouchableOpacity>
               <View style={styles.roleIndicator}>
                 <Text style={styles.roleIcon}>{getRoleIcon(user?.role)}</Text>
@@ -550,7 +571,7 @@ const ProfileScreen = ({ navigation }) => {
                 onPress={handleImagePicker}
               >
                 <Text style={styles.changePhotoText}>
-                  {profileImage ? 'Change Photo' : 'Add Photo'}
+                  {profilePhoto ? 'Change Photo' : 'Add Photo'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -670,7 +691,7 @@ const ProfileScreen = ({ navigation }) => {
               <View style={styles.settingContent}>
                 <Text style={styles.settingTitle}>Profile Photo</Text>
                 <Text style={styles.settingSubtitle}>
-                  {profileImage ? 'Change your profile photo' : 'Add a profile photo'}
+                  {profilePhoto ? 'Change your profile photo' : 'Add a profile photo'}
                 </Text>
               </View>
               <Text style={styles.settingArrow}>→</Text>
@@ -855,6 +876,21 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: theme.colors.background.card,
     ...theme.shadows.sm,
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FF3B30',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.background.card,
+    ...theme.shadows.sm,
+    zIndex: 10,
   },
   cameraIcon: {
     fontSize: 12,

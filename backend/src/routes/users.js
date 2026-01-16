@@ -112,6 +112,129 @@ router.get('/role/:role', authenticate, authorize('owner', 'employee'), async (r
 });
 
 /**
+ * @route   POST /api/users/profile-photo
+ * @desc    Upload profile photo to GCS
+ * @access  Private
+ */
+router.post('/profile-photo', authenticate, upload.single('photo'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No photo file provided',
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Delete old profile photo from GCS if exists
+    if (user.profileImage) {
+      try {
+        // Extract GCS path from URL
+        const oldUrl = user.profileImage;
+        const bucketName = process.env.GCS_BUCKET;
+        const gcsPath = oldUrl.split(`${bucketName}/`)[1];
+        if (gcsPath) {
+          await deleteFromGCS(gcsPath);
+          console.log('🗑️ Deleted old profile photo:', gcsPath);
+        }
+      } catch (deleteError) {
+        console.log('⚠️ Could not delete old photo:', deleteError.message);
+      }
+    }
+
+    // Upload new photo to GCS
+    const result = await uploadToGCS({
+      buffer: req.file.buffer,
+      mimetype: req.file.mimetype,
+      originalname: `${req.user._id}_${req.file.originalname}`, // Add user ID to filename
+      folder: 'profile-photos',
+    });
+
+    // Update user's profileImage
+    user.profileImage = result.url;
+    await user.save();
+
+    console.log('✅ Profile photo uploaded for user:', user._id);
+
+    res.json({
+      success: true,
+      message: 'Profile photo uploaded successfully',
+      data: {
+        profileImage: result.url,
+        profilePhoto: result.url,
+      },
+    });
+  } catch (error) {
+    console.error('Profile photo upload error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload profile photo',
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * @route   DELETE /api/users/profile-photo
+ * @desc    Delete profile photo from GCS
+ * @access  Private
+ */
+router.delete('/profile-photo', authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    if (!user.profileImage) {
+      return res.status(400).json({
+        success: false,
+        message: 'No profile photo to delete',
+      });
+    }
+
+    // Delete from GCS
+    try {
+      const oldUrl = user.profileImage;
+      const bucketName = process.env.GCS_BUCKET;
+      const gcsPath = oldUrl.split(`${bucketName}/`)[1];
+      if (gcsPath) {
+        await deleteFromGCS(gcsPath);
+        console.log('🗑️ Deleted profile photo from GCS:', gcsPath);
+      }
+    } catch (deleteError) {
+      console.log('⚠️ GCS delete error:', deleteError.message);
+    }
+
+    // Clear profileImage field
+    user.profileImage = null;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Profile photo deleted successfully',
+    });
+  } catch (error) {
+    console.error('Delete profile photo error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete profile photo',
+      error: error.message,
+    });
+  }
+});
+
+/**
  * @route   GET /api/users/:id
  * @desc    Get user by ID
  * @access  Private (Owner or Self)
@@ -301,9 +424,8 @@ router.post('/register-client', authenticate, authorize('owner', 'employee'), as
 
     await newClient.save();
 
-    // Return without password
-    const clientData = newClient.toObject();
-    delete clientData.password;
+    // Return without password using toSafeObject
+    const clientData = newClient.toSafeObject();
 
     res.status(201).json({
       success: true,
@@ -327,7 +449,7 @@ router.post('/register-client', authenticate, authorize('owner', 'employee'), as
  */
 router.put('/profile', authenticate, async (req, res) => {
   try {
-    const { firstName, lastName, phone, email, address, profileImage } = req.body;
+    const { firstName, lastName, phone, email, address, profileImage, profilePhoto } = req.body;
 
     const updates = {};
     if (firstName) updates.firstName = firstName;
@@ -345,7 +467,10 @@ router.put('/profile', authenticate, async (req, res) => {
       updates.email = email.toLowerCase();
     }
     if (address) updates.address = address;
-    if (profileImage) updates.profileImage = profileImage;
+    
+    // Handle both profileImage and profilePhoto fields
+    const newProfilePhoto = profilePhoto || profileImage;
+    if (newProfilePhoto) updates.profileImage = newProfilePhoto;
 
     const user = await User.findByIdAndUpdate(
       req.user._id,
@@ -373,128 +498,6 @@ router.put('/change-password', authenticate, async (req, res) => {
     success: false,
     message: 'This endpoint is deprecated. Use /api/auth/change-password with OTP verification.',
   });
-});
-
-/**
- * @route   POST /api/users/profile-photo
- * @desc    Upload profile photo to GCS
- * @access  Private
- */
-router.post('/profile-photo', authenticate, upload.single('photo'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'No photo file provided',
-      });
-    }
-
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
-    }
-
-    // Delete old profile photo from GCS if exists
-    if (user.profileImage) {
-      try {
-        // Extract GCS path from URL
-        const oldUrl = user.profileImage;
-        const bucketName = process.env.GCS_BUCKET;
-        const gcsPath = oldUrl.split(`${bucketName}/`)[1];
-        if (gcsPath) {
-          await deleteFromGCS(gcsPath);
-          console.log('🗑️ Deleted old profile photo:', gcsPath);
-        }
-      } catch (deleteError) {
-        console.log('⚠️ Could not delete old photo:', deleteError.message);
-      }
-    }
-
-    // Upload new photo to GCS
-    const result = await uploadToGCS({
-      buffer: req.file.buffer,
-      mimetype: req.file.mimetype,
-      originalname: `${req.user._id}_${req.file.originalname}`, // Add user ID to filename
-      folder: 'profile-photos',
-    });
-
-    // Update user's profileImage
-    user.profileImage = result.url;
-    await user.save();
-
-    console.log('✅ Profile photo uploaded for user:', user._id);
-
-    res.json({
-      success: true,
-      message: 'Profile photo uploaded successfully',
-      data: {
-        profileImage: result.url,
-      },
-    });
-  } catch (error) {
-    console.error('Profile photo upload error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to upload profile photo',
-      error: error.message,
-    });
-  }
-});
-
-/**
- * @route   DELETE /api/users/profile-photo
- * @desc    Delete profile photo from GCS
- * @access  Private
- */
-router.delete('/profile-photo', authenticate, async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
-    }
-
-    if (!user.profileImage) {
-      return res.status(400).json({
-        success: false,
-        message: 'No profile photo to delete',
-      });
-    }
-
-    // Delete from GCS
-    try {
-      const oldUrl = user.profileImage;
-      const bucketName = process.env.GCS_BUCKET;
-      const gcsPath = oldUrl.split(`${bucketName}/`)[1];
-      if (gcsPath) {
-        await deleteFromGCS(gcsPath);
-        console.log('🗑️ Deleted profile photo from GCS:', gcsPath);
-      }
-    } catch (deleteError) {
-      console.log('⚠️ GCS delete error:', deleteError.message);
-    }
-
-    // Clear profileImage field
-    user.profileImage = null;
-    await user.save();
-
-    res.json({
-      success: true,
-      message: 'Profile photo deleted successfully',
-    });
-  } catch (error) {
-    console.error('Delete profile photo error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete profile photo',
-      error: error.message,
-    });
-  }
 });
 
 module.exports = router;

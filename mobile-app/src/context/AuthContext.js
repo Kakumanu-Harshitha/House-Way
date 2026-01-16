@@ -69,6 +69,12 @@ export const AuthProvider = ({ children }) => {
 
       if (storedToken && storedUser) {
         const user = JSON.parse(storedUser);
+        
+        // ✅ Ensure profilePhoto exists (frontend compatibility)
+        if (user.profileImage && !user.profilePhoto) {
+          user.profilePhoto = user.profileImage;
+        }
+
         dispatch({
           type: AUTH_ACTIONS.LOGIN_SUCCESS,
           payload: { user, token: storedToken },
@@ -93,6 +99,11 @@ export const AuthProvider = ({ children }) => {
 
       if (response.success) {
         const { user, token } = response.data;
+
+        // ✅ Ensure profilePhoto exists (frontend compatibility)
+        if (user.profileImage && !user.profilePhoto) {
+          user.profilePhoto = user.profileImage;
+        }
 
         // 🧠 Debug logs to verify role & subRole
         console.log('[AuthContext] Login response user:', user);
@@ -147,6 +158,11 @@ export const AuthProvider = ({ children }) => {
 
       if (response.success) {
         const { user, token } = response.data;
+
+        // ✅ Ensure profilePhoto exists (frontend compatibility)
+        if (user.profileImage && !user.profilePhoto) {
+          user.profilePhoto = user.profileImage;
+        }
 
         await Promise.all([
           AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token),
@@ -206,6 +222,12 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.updateProfile(userData);
       if (response.success) {
         const updatedUser = response.data.user;
+        
+        // ✅ Ensure profilePhoto exists
+        if (updatedUser.profileImage && !updatedUser.profilePhoto) {
+          updatedUser.profilePhoto = updatedUser.profileImage;
+        }
+
         await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser));
         dispatch({
           type: AUTH_ACTIONS.UPDATE_USER,
@@ -224,6 +246,11 @@ export const AuthProvider = ({ children }) => {
   // ✅ Sync user data from backend without triggering an API update
   const syncUser = async (userData) => {
     try {
+      // ✅ Ensure profilePhoto exists (frontend compatibility)
+      if (userData.profileImage && !userData.profilePhoto) {
+        userData.profilePhoto = userData.profileImage;
+      }
+
       await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
       dispatch({
         type: AUTH_ACTIONS.UPDATE_USER,

@@ -19,7 +19,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../context/AuthContext';
-import { usersAPI } from '../../utils/api';
+import { usersAPI, getProfileImageUrl } from '../../utils/api';
 import BottomNavBar from '../../components/common/BottomNavBar';
 import { COLORS } from '../../styles/colors';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
@@ -95,7 +95,7 @@ const ProfileScreen = ({ navigation, route }) => {
     const { user, updateUser, syncUser, logout } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [profileImage, setProfileImage] = useState(user?.profilePicture || user?.profileImage || null);
+    const [profilePhoto, setProfilePhoto] = useState(user?.profilePhoto || null);
 
     const [formData, setFormData] = useState({
         firstName: user?.firstName || '',
@@ -112,13 +112,8 @@ const ProfileScreen = ({ navigation, route }) => {
             const response = await usersAPI.getUserById(user._id);
             if (response.success) {
                 const userData = response.data.user;
-                // Cache busting
-                const timestamp = new Date().getTime();
-                const profileImageUrl = userData.profileImage ? 
-                  (userData.profileImage.includes('?') ? `${userData.profileImage}&t=${timestamp}` : `${userData.profileImage}?t=${timestamp}`) 
-                  : null;
 
-                setProfileImage(profileImageUrl);
+                setProfilePhoto(userData.profilePhoto || null);
                 setFormData(prev => ({
                     ...prev,
                     firstName: userData.firstName || '',
@@ -127,13 +122,10 @@ const ProfileScreen = ({ navigation, route }) => {
                     phone: userData.phone || '',
                 }));
                 
-                if (user.profileImage !== userData.profileImage || 
+                if (user.profilePhoto !== userData.profilePhoto || 
                     user.firstName !== userData.firstName || 
                     user.lastName !== userData.lastName) {
                     if (syncUser) {
-                        if (profileImageUrl) {
-                            userData.profileImage = profileImageUrl;
-                        }
                         syncUser(userData);
                     }
                 }
@@ -142,6 +134,18 @@ const ProfileScreen = ({ navigation, route }) => {
             console.error('Fetch user error:', error);
         }
     };
+
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                firstName: user.firstName || '',
+                lastName: user.lastName || '',
+                email: user.email || '',
+                phone: user.phone || '',
+            });
+            setProfilePhoto(user.profilePhoto || null);
+        }
+    }, [user]);
 
     useEffect(() => {
         fetchUserData();
@@ -192,6 +196,12 @@ const ProfileScreen = ({ navigation, route }) => {
     };
 
     const handleImagePicker = () => {
+        if (Platform.OS === 'web') {
+            // On web, directly open file picker as it handles both camera/gallery on mobile web
+            handleImageSelection('gallery');
+            return;
+        }
+
         Alert.alert(
             'Profile Photo Options',
             'Choose how you want to update your profile photo',
@@ -204,7 +214,7 @@ const ProfileScreen = ({ navigation, route }) => {
                     text: '🖼️ Choose from Gallery',
                     onPress: () => handleImageSelection('gallery')
                 },
-                ...(profileImage ? [{
+                ...(profilePhoto ? [{
                     text: '🗑️ Remove Photo',
                     onPress: () => deletePhoto(),
                     style: 'destructive'
@@ -218,10 +228,53 @@ const ProfileScreen = ({ navigation, route }) => {
     };
 
     const handleImageSelection = async (source) => {
+        console.log('handleImageSelection called with source:', source);
         try {
+            if (Platform.OS === 'web') {
+                // Web file input handling
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+
+                if (source === 'camera') {
+                    input.capture = 'environment'; // Use camera
+                }
+
+                input.onchange = async (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    // Validate file type
+                    if (!file.type.startsWith('image/')) {
+                        showAlert('Error', 'Please select an image file');
+                        return;
+                    }
+
+                    // Validate file size (5MB limit)
+                    if (file.size > 5 * 1024 * 1024) {
+                        showAlert('Error', 'Image size should be less than 5MB');
+                        return;
+                    }
+
+                    try {
+                        const formData = new FormData();
+                        formData.append('photo', file, file.name);
+                        await uploadProfilePhoto(formData);
+                    } catch (error) {
+                        console.error('Web upload preparation error:', error);
+                    }
+                };
+
+                input.click();
+                return;
+            }
+
+            // Mobile handling
             const { status } = source === 'camera' 
                 ? await ImagePicker.requestCameraPermissionsAsync()
                 : await ImagePicker.requestMediaLibraryPermissionsAsync();
+            
+            console.log('Permission status:', status);
 
             if (status !== 'granted') {
                 showAlert('Permission Required', `Please allow access to ${source}`);
@@ -245,8 +298,20 @@ const ProfileScreen = ({ navigation, route }) => {
                 });
             }
 
+            console.log('ImagePicker result:', result);
+
             if (!result.canceled && result.assets[0]) {
-                await uploadProfilePhoto(result.assets[0].uri);
+                const asset = result.assets[0];
+                const localUri = asset.uri;
+                const filename = localUri.split('/').pop();
+                const match = /\.(\w+)$/.exec(filename);
+                const type = match ? `image/${match[1]}` : `image`;
+                
+                const formData = new FormData();
+                formData.append('photo', { uri: localUri, name: filename, type });
+                
+                console.log('Uploading photo from mobile:', localUri);
+                await uploadProfilePhoto(formData);
             }
         } catch (error) {
             console.error('Image picker error:', error);
@@ -254,36 +319,21 @@ const ProfileScreen = ({ navigation, route }) => {
         }
     };
 
-    const uploadProfilePhoto = async (imageUri) => {
+    const uploadProfilePhoto = async (formData) => {
+        console.log('uploadProfilePhoto start');
         try {
             setIsLoading(true);
-            const formDataUpload = new FormData();
-            const filename = imageUri.split('/').pop() || 'profile.jpg';
-            const match = /\.(\w+)$/.exec(filename);
-            const type = match ? `image/${match[1]}` : `image/jpeg`;
+            
+            console.log('Sending API request...');
+            const uploadResponse = await usersAPI.uploadProfilePhoto(formData);
+            console.log('API response:', uploadResponse);
 
-            if (Platform.OS === 'web') {
-                try {
-                    const response = await fetch(imageUri);
-                    const blob = await response.blob();
-                    formDataUpload.append('photo', blob, filename);
-                } catch (fetchError) {
-                    console.error('Error fetching image blob:', fetchError);
-                    formDataUpload.append('photo', { uri: imageUri, name: filename, type });
-                }
-            } else {
-                formDataUpload.append('photo', { uri: imageUri, name: filename, type });
-            }
-
-            const uploadResponse = await usersAPI.uploadProfilePhoto(formDataUpload);
             if (uploadResponse.success) {
-                const timestamp = new Date().getTime();
                 const newImage = uploadResponse.data.profileImage;
-                const imageWithTimestamp = newImage.includes('?') ? `${newImage}&t=${timestamp}` : `${newImage}?t=${timestamp}`;
 
-                setProfileImage(imageWithTimestamp);
+                setProfilePhoto(newImage);
                 if (syncUser) {
-                    await syncUser({ ...user, profileImage: imageWithTimestamp });
+                    await syncUser({ ...user, profilePhoto: newImage });
                 }
                 showAlert('Success', 'Profile photo updated successfully!');
             } else {
@@ -298,42 +348,54 @@ const ProfileScreen = ({ navigation, route }) => {
     };
 
     const deletePhoto = async () => {
-        if (!profileImage || !profileImage.startsWith('http')) {
-            setProfileImage(null);
+        if (!profilePhoto) {
             return;
         }
 
-        Alert.alert(
-            'Delete Photo',
-            'Are you sure you want to delete your profile photo?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            setIsLoading(true);
-                            const response = await usersAPI.deleteProfilePhoto();
-                            if (response.success) {
-                                setProfileImage(null);
-                                if (syncUser) {
-                                    syncUser({ ...user, profileImage: null });
-                                }
-                                showAlert('Success', 'Profile photo deleted');
-                            } else {
-                                showAlert('Error', response.message || 'Failed to delete photo');
-                            }
-                        } catch (error) {
-                            console.error('Delete photo error:', error);
-                            showAlert('Error', 'Failed to delete photo');
-                        } finally {
-                            setIsLoading(false);
-                        }
-                    }
-                },
-            ]
-        );
+        if (Platform.OS === 'web') {
+            if (window.confirm('Are you sure you want to delete your profile photo?')) {
+                await performDeletePhoto();
+            }
+        } else {
+            Alert.alert(
+                'Delete Photo',
+                'Are you sure you want to delete your profile photo?',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Delete',
+                        style: 'destructive',
+                        onPress: performDeletePhoto
+                    },
+                ]
+            );
+        }
+    };
+
+    const performDeletePhoto = async () => {
+        try {
+            console.log('Deleting profile photo...');
+            setIsLoading(true);
+            const response = await usersAPI.deleteProfilePhoto();
+            console.log('Delete photo response:', response);
+
+            if (response.success) {
+                setProfilePhoto(null);
+                if (syncUser) {
+                    console.log('Syncing user with null profilePhoto');
+                    await syncUser({ ...user, profilePhoto: null });
+                }
+                showAlert('Success', 'Profile photo deleted');
+            } else {
+                console.error('Delete photo failed:', response);
+                showAlert('Error', response.message || 'Failed to delete photo');
+            }
+        } catch (error) {
+            console.error('Delete photo error:', error);
+            showAlert('Error', 'Failed to delete photo');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleSaveProfile = async () => {
@@ -437,8 +499,12 @@ const ProfileScreen = ({ navigation, route }) => {
                     <View style={styles.profileCard}>
                         <View style={styles.avatarContainer}>
                             <TouchableOpacity onPress={handleImagePicker}>
-                                {profileImage ? (
-                                    <Image source={{ uri: profileImage }} style={styles.avatar} />
+                                {profilePhoto ? (
+                                    <Image 
+                                        source={{ uri: getProfileImageUrl(profilePhoto) }} 
+                                        style={styles.avatar}
+                                        onError={() => setProfilePhoto(null)}
+                                    />
                                 ) : (
                                     <View style={styles.avatarPlaceholder}>
                                         <Feather name="user" size={40} color={COLORS.primary} />
@@ -448,7 +514,7 @@ const ProfileScreen = ({ navigation, route }) => {
                                     <Feather name="camera" size={14} color={COLORS.white} />
                                 </View>
                             </TouchableOpacity>
-                            {profileImage && (
+                            {profilePhoto && (
                                 <TouchableOpacity style={styles.deleteBadge} onPress={deletePhoto}>
                                     <Feather name="x" size={12} color={COLORS.white} />
                                 </TouchableOpacity>
@@ -529,7 +595,7 @@ const ProfileScreen = ({ navigation, route }) => {
                     <View style={styles.section}>
                         <TouchableOpacity
                             style={styles.sectionHeaderButton}
-                            onPress={handleChangePassword}
+                            onPress={() => setShowPasswordModal(true)}
                         >
                             <View style={styles.sectionHeader}>
                                 <Feather name="lock" size={18} color={COLORS.primary} />

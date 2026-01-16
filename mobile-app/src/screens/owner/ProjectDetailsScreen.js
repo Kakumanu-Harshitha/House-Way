@@ -9,8 +9,8 @@ import {
   FlatList,
   ActivityIndicator,
   StatusBar,
-  Alert,
-  Image
+  Image,
+  Alert
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -487,13 +487,9 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         <Text style={styles.teamSectionTitle}>TEAM MEMBERS</Text>
         {team.map((member, idx) => (
           <View key={member._id || idx} style={styles.memberCard}>
-            {member.profileImage ? (
+            {member.profilePhoto ? (
                <Image 
-                 source={{ 
-                   uri: member.profileImage.includes('?') 
-                     ? `${member.profileImage}&t=${new Date().getTime()}` 
-                     : `${member.profileImage}?t=${new Date().getTime()}` 
-                 }} 
+                 source={{ uri: getProfileImageUrl(member.profilePhoto) }} 
                  style={styles.memberAvatar} 
                />
             ) : (

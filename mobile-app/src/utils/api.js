@@ -1,11 +1,32 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getApiBaseUrl } from './network';
+import { getApiBaseUrl, getServerBaseUrl } from './network';
 
 // -----------------------------
 // 🔧 Base URL Configuration
 // -----------------------------
 const BASE_URL = getApiBaseUrl();
+
+/**
+ * Generates a full profile image URL with cache busting.
+ * @param {string} imagePath - The relative path or full URL of the image
+ * @returns {string|null} - The full URL with timestamp or null
+ */
+export const getProfileImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  
+  // If it's already a full URL (e.g. from Google/Facebook or external), return it
+  if (imagePath.startsWith('http')) return imagePath;
+  
+  // Add cache busting
+  const timestamp = new Date().getTime();
+  const urlWithCache = imagePath.includes('?') 
+    ? `${imagePath}&t=${timestamp}` 
+    : `${imagePath}?t=${timestamp}`;
+
+  // Prepend server base URL
+  return `${getServerBaseUrl()}${urlWithCache.startsWith('/') ? '' : '/'}${urlWithCache}`;
+};
 
 // -----------------------------
 // 📡 Axios Instance

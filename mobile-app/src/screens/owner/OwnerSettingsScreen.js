@@ -14,10 +14,14 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  Image,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAuth } from '../../context/AuthContext';
 
 const OwnerSettingsScreen = ({ navigation }) => {
+  const { user } = useAuth();
+  const [imageError, setImageError] = useState(false);
   const [settings, setSettings] = useState({
     darkMode: false,
     compactView: false,
@@ -92,6 +96,35 @@ const OwnerSettingsScreen = ({ navigation }) => {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Profile Section */}
+        <View style={styles.profileSection}>
+          <View style={styles.avatarContainer}>
+            {user?.profilePhoto && !imageError ? (
+              <Image
+                source={{ uri: getProfileImageUrl(user.profilePhoto) }}
+                style={styles.avatar}
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                <Text style={styles.avatarText}>
+                  {user?.firstName?.[0] || 'O'}{user?.lastName?.[0] || ''}
+                </Text>
+              </View>
+            )}
+            <TouchableOpacity 
+              style={styles.editAvatarButton}
+              onPress={() => navigation.navigate('Overview', { screen: 'ProfileScreen' })}
+            >
+              <MaterialCommunityIcons name="pencil" size={16} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.profileName}>
+            {user?.firstName} {user?.lastName}
+          </Text>
+          <Text style={styles.profileRole}>Owner / Admin</Text>
+        </View>
+
         {/* Appearance */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>APPEARANCE</Text>
@@ -386,6 +419,53 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  profileSection: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+    backgroundColor: '#FFFFFF',
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: 12,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F3F4F6',
+  },
+  avatarPlaceholder: {
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#9CA3AF',
+  },
+  editAvatarButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#2563EB',
+    padding: 6,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  profileRole: {
+    fontSize: 14,
+    color: '#6B7280',
   },
   section: {
     backgroundColor: '#FFFFFF',

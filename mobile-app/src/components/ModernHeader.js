@@ -9,6 +9,7 @@ import {
   Image,
 } from 'react-native';
 import theme from '../styles/theme';
+import { getProfileImageUrl } from '../utils/api';
 
 const ModernHeader = ({
   title,
@@ -99,13 +100,9 @@ const ModernHeader = ({
               style={styles.profileButton}
               onPress={onProfilePress}
             >
-              {user.profileImage ? (
+              {user.profilePhoto ? (
                 <Image
-                  source={{ 
-                    uri: user.profileImage.includes('?') 
-                      ? `${user.profileImage}&t=${new Date().getTime()}` 
-                      : `${user.profileImage}?t=${new Date().getTime()}` 
-                  }}
+                  source={{ uri: getProfileImageUrl(user.profilePhoto) }}
                   style={styles.avatarImage}
                 />
               ) : (

@@ -14,6 +14,7 @@ import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import theme from '../styles/theme';
+import { getProfileImageUrl } from '../utils/api';
 
 const CommonHeader = ({ title, userRole, showNotifications = true }) => {
   const { user, logout } = useAuth();
@@ -31,20 +32,30 @@ const CommonHeader = ({ title, userRole, showNotifications = true }) => {
       .substring(0, 2);
   };
 
-  const renderProfileImage = (size = 'small') => {
-    if (user?.profileImage) {
-      const imageUrl = user.profileImage.includes('?') 
-        ? `${user.profileImage}&t=${new Date().getTime()}` 
-        : `${user.profileImage}?t=${new Date().getTime()}`;
-      return (
-        <Image
-          source={{ uri: imageUrl }}
-          style={size === 'large' ? styles.largeProfileImage : styles.profileImage}
-          resizeMode="cover"
-        />
-      );
-    }
-    return <Text style={styles.initialsText}>{getUserInitials()}</Text>;
+  const ProfileAvatar = ({ size = 'small', style }) => {
+    const [imageError, setImageError] = useState(false);
+    
+    // Determine container and image styles based on size
+    const containerStyle = size === 'large' ? styles.largeProfileButton : styles.profileButton;
+    const imageStyle = size === 'large' ? styles.largeProfileImage : styles.profileImage;
+
+    const showImage = user?.profilePhoto && !imageError;
+    const backgroundColor = showImage ? 'transparent' : getRoleColor();
+
+    return (
+      <View style={[containerStyle, { backgroundColor }, style]}>
+        {showImage ? (
+          <Image
+            source={{ uri: getProfileImageUrl(user.profilePhoto) }}
+            style={imageStyle}
+            resizeMode="cover"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <Text style={styles.initialsText}>{getUserInitials()}</Text>
+        )}
+      </View>
+    );
   };
 
   const getRoleColor = () => {
@@ -120,7 +131,7 @@ const CommonHeader = ({ title, userRole, showNotifications = true }) => {
           {/* Left side - Title */}
           <View style={styles.leftSection}>
             <Text style={styles.headerTitle}>{title}</Text>
-            {userRole && (
+            {!!userRole && (
               <View
                 style={[
                   styles.roleBadge,
@@ -153,10 +164,6 @@ const CommonHeader = ({ title, userRole, showNotifications = true }) => {
 
             {/* Profile Menu Button */}
             <TouchableOpacity
-              style={[
-                styles.profileButton,
-                { backgroundColor: user?.profileImage ? 'transparent' : getRoleColor() },
-              ]}
               onPress={() => {
                 // For employee users (designers), go straight to Settings.
                 if ((userRole || '').toLowerCase() === 'employee' || user?.role === 'employee') {
@@ -166,7 +173,7 @@ const CommonHeader = ({ title, userRole, showNotifications = true }) => {
                 }
               }}
             >
-              {renderProfileImage('small')}
+              <ProfileAvatar size="small" />
             </TouchableOpacity>
           </View>
         </View>
@@ -187,26 +194,7 @@ const CommonHeader = ({ title, userRole, showNotifications = true }) => {
           <View style={styles.menuContainer}>
             {/* User Info Section */}
             <View style={styles.userInfoSection}>
-              <View
-                style={[
-                  styles.largeProfileButton,
-                  { backgroundColor: user?.profileImage ? 'transparent' : getRoleColor() },
-                ]}
-              >
-                {user?.profileImage ? (
-                  <Image
-                    source={{ 
-                      uri: user.profileImage.includes('?') 
-                        ? `${user.profileImage}&t=${new Date().getTime()}` 
-                        : `${user.profileImage}?t=${new Date().getTime()}` 
-                    }}
-                    style={styles.largeProfileImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Text style={styles.initialsText}>{getUserInitials()}</Text>
-                )}
-              </View>
+              <ProfileAvatar size="large" />
               <View style={styles.userDetails}>
                 <Text style={styles.userName}>{user?.name || 'User'}</Text>
                 <Text style={styles.userEmail}>{user?.email}</Text>

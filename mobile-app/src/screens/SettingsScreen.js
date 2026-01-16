@@ -1,8 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Image } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
+import { getProfileImageUrl } from '../utils/api';
 import CommonHeader from '../components/CommonHeader';
 
 // Colors for settings screen - Clean white with gold accents
@@ -94,11 +95,19 @@ export default function SettingsScreen() {
         {/* User Info Card */}
         <View style={styles.userCard}>
           <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
-              </Text>
-            </View>
+            {user?.profilePhoto && !imageError ? (
+              <Image
+                source={{ uri: getProfileImageUrl(user.profilePhoto) }}
+                style={styles.avatar}
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {user?.firstName?.[0]}{user?.lastName?.[0]}
+                </Text>
+              </View>
+            )}
           </View>
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{user?.firstName} {user?.lastName}</Text>
@@ -185,6 +194,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 3,
     borderColor: 'rgba(184, 134, 11, 0.2)',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 32,
   },
   avatarText: {
     fontSize: 24,

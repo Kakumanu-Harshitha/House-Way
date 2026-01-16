@@ -15,6 +15,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import theme from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
 import { ordersAPI } from '../services/ordersAPI';
+import { getProfileImageUrl } from '../utils/api';
 
 // Utility: pick black or white depending on background brightness
 const getContrastColor = (hexColor) => {
@@ -196,19 +197,17 @@ const AdminNavbar = ({
                   styles.avatar,
                   {
                     backgroundColor:
-                      user?.profileImage ? 'transparent' : (effectiveTextColor === '#ffffff'
+                      user?.profilePhoto ? 'transparent' : (effectiveTextColor === '#ffffff'
                         ? 'rgba(255,255,255,0.3)'
                         : 'rgba(0,0,0,0.1)'),
                     overflow: 'hidden'
                   },
                 ]}
               >
-                {user?.profileImage ? (
+                {user?.profilePhoto ? (
                   <Image
                     source={{ 
-                      uri: user.profileImage.includes('?') 
-                        ? `${user.profileImage}&t=${new Date().getTime()}` 
-                        : `${user.profileImage}?t=${new Date().getTime()}` 
+                      uri: getProfileImageUrl(user.profilePhoto)
                     }}
                     style={{
                       width: 32,
@@ -285,12 +284,10 @@ const AdminNavbar = ({
           >
             {/* Menu Header */}
             <View style={styles.menuHeader}>
-              {user?.profileImage ? (
+              {user?.profilePhoto ? (
                 <Image
                   source={{ 
-                    uri: user.profileImage.includes('?') 
-                      ? `${user.profileImage}&t=${new Date().getTime()}` 
-                      : `${user.profileImage}?t=${new Date().getTime()}` 
+                    uri: getProfileImageUrl(user.profilePhoto) 
                   }}
                   style={{
                     width: 50,
@@ -325,7 +322,8 @@ const AdminNavbar = ({
               style={styles.menuItem}
               onPress={() => {
                 closeMenu();
-                navigation?.navigate('OwnerProfile');
+                // Navigate to ProfileScreen within Overview stack to ensure it works from any tab
+                navigation?.navigate('Overview', { screen: 'ProfileScreen' });
               }}
             >
               <Ionicons
@@ -340,7 +338,8 @@ const AdminNavbar = ({
               style={styles.menuItem}
               onPress={() => {
                 closeMenu();
-                navigation?.navigate('OwnerSettings');
+                // Navigate to SettingsScreen within Overview stack
+                navigation?.navigate('Overview', { screen: 'SettingsScreen' });
               }}
             >
               <Ionicons
@@ -355,7 +354,8 @@ const AdminNavbar = ({
               style={styles.menuItem}
               onPress={() => {
                 closeMenu();
-                navigation?.navigate('OwnerHelp');
+                // Navigate to HelpScreen within Overview stack
+                navigation?.navigate('Overview', { screen: 'HelpScreen' });
               }}
             >
               <Ionicons

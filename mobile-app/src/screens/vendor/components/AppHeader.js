@@ -2,16 +2,14 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import theme from '../../../styles/theme';
+import { getProfileImageUrl } from '../../../utils/api';
 
 export default function AppHeader({ title, onBack, onMenu, onNotifications, user, onProfile }) {
   const renderProfileImage = () => {
-    if (user?.profileImage) {
-      const profileImageUri = user.profileImage.includes('?') 
-        ? `${user.profileImage}&t=${new Date().getTime()}` 
-        : `${user.profileImage}?t=${new Date().getTime()}`;
+    if (user?.profilePhoto) {
       return (
         <Image
-          source={{ uri: profileImageUri }}
+          source={{ uri: getProfileImageUrl(user.profilePhoto) }}
           style={styles.profileImage}
           resizeMode="cover"
         />

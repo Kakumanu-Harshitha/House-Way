@@ -1,5 +1,26 @@
 import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
+
+// Simple placeholder component for missing screens
+const PlaceholderScreen = ({ route }) => (
+  <View style={styles.centered}>
+    <Text style={styles.text}>{route.name} is coming soon!</Text>
+  </View>
+);
+
+const styles = StyleSheet.create({
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  text: {
+    fontSize: 16,
+    color: '#666',
+  },
+});
 
 // Import screens
 import LoginSelectionScreen from '../screens/employee/LoginSelectionScreen';
@@ -209,7 +230,7 @@ const EmployeeNavigator = () => {
       {/* TODO: Add remaining client management screens when implemented */}
       <Stack.Screen
         name="AddTimelineEvent"
-        component={() => null}
+        component={PlaceholderScreen}
         options={{
           title: 'Add Timeline Event',
         }}
@@ -217,7 +238,7 @@ const EmployeeNavigator = () => {
 
       <Stack.Screen
         name="UploadMedia"
-        component={() => null}
+        component={PlaceholderScreen}
         options={{
           title: 'Upload Media',
         }}

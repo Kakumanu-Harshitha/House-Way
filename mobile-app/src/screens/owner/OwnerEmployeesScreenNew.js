@@ -20,13 +20,11 @@ import {
     TextInput,
     ActivityIndicator,
     Alert,
-    RefreshControl,
-    Dimensions,
-    Image,
+    RefreshControl, Dimensions,  Platform,  Image
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { api } from '../../services/api';
+import { getProfileImageUrl } from '../../utils/api';
 import AdminNavbar from '../../components/AdminNavbar';
 
 const { width } = Dimensions.get('window');
@@ -175,6 +173,12 @@ const SimpleCalendar = ({
 
 // Day Details Modal - Shows all employees' attendance for a specific day
 const DayDetailsModal = ({ visible, date, dayData, employees, onClose }) => {
+    const [imageErrors, setImageErrors] = useState({});
+
+    const handleImageError = (id) => {
+        setImageErrors(prev => ({ ...prev, [id]: true }));
+    };
+
     if (!visible || !date) return null;
     
     const dateObj = new Date(date);
@@ -234,10 +238,11 @@ const DayDetailsModal = ({ visible, date, dayData, employees, onClose }) => {
                         {employeeAttendance.map(({ employee, record }) => (
                             <View key={employee._id} style={styles.attendanceRow}>
                                 <View style={styles.employeeInfo}>
-                                    {employee.profileImage ? (
+                                    {employee.profilePhoto && !imageErrors[employee._id] ? (
                                         <Image
-                                            source={{ uri: employee.profileImage.includes('?') ? `${employee.profileImage}&t=${new Date().getTime()}` : `${employee.profileImage}?t=${new Date().getTime()}` }}
+                                            source={{ uri: getProfileImageUrl(employee.profilePhoto) }}
                                             style={[styles.avatarSmall, { backgroundColor: 'transparent' }]}
+                                            onError={() => handleImageError(employee._id)}
                                         />
                                     ) : (
                                         <View style={[
@@ -345,9 +350,9 @@ const EmployeeAttendanceModal = ({ visible, employee, attendanceRecords, project
                 <View style={styles.modalContent}>
                     <View style={styles.modalHeader}>
                         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-                            {employee.profileImage ? (
+                            {employee.profilePhoto ? (
                                 <Image
-                                    source={{ uri: employee.profileImage.includes('?') ? `${employee.profileImage}&t=${new Date().getTime()}` : `${employee.profileImage}?t=${new Date().getTime()}` }}
+                                    source={{ uri: getProfileImageUrl(employee.profilePhoto) }}
                                     style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12, backgroundColor: '#f0f0f0' }}
                                 />
                             ) : (
@@ -558,6 +563,12 @@ const OwnerEmployeesScreen = ({ navigation }) => {
         totalEmployees: 0,
         avgAttendance: 0,
     });
+    
+    const [imageErrors, setImageErrors] = useState({});
+
+    const handleImageError = (id) => {
+        setImageErrors(prev => ({ ...prev, [id]: true }));
+    };
 
     const fetchData = async () => {
         try {
@@ -611,7 +622,7 @@ const OwnerEmployeesScreen = ({ navigation }) => {
             
         } catch (error) {
             console.error('[OwnerEmployees] Error:', error);
-            Alert.alert('Error', 'Failed to load data');
+            showAlert('Error', 'Failed to load data');
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -741,10 +752,11 @@ const OwnerEmployeesScreen = ({ navigation }) => {
                                 style={styles.employeeCard}
                                 onPress={() => handleEmployeeSelect(emp)}
                             >
-                                {emp.profileImage ? (
+                                {emp.profilePhoto && !imageErrors[emp._id] ? (
                                     <Image
-                                        source={{ uri: emp.profileImage.includes('?') ? `${emp.profileImage}&t=${new Date().getTime()}` : `${emp.profileImage}?t=${new Date().getTime()}` }}
+                                        source={{ uri: getProfileImageUrl(emp.profilePhoto) }}
                                         style={[styles.avatar, { backgroundColor: 'transparent' }]}
+                                        onError={() => handleImageError(emp._id)}
                                     />
                                 ) : (
                                     <View style={[

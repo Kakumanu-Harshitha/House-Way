@@ -15,7 +15,7 @@ export const mockUsers = [
         role: 'employee',
         subRole: 'designTeam',
         phone: '+91 98765 43210',
-        profileImage: 'https://randomuser.me/api/portraits/men/32.jpg',
+        profilePhoto: 'https://randomuser.me/api/portraits/men/32.jpg',
         isActive: true,
         employeeDetails: {
             employeeId: 'EMP-101',
@@ -33,7 +33,7 @@ export const mockUsers = [
         role: 'employee',
         subRole: 'vendorTeam',
         phone: '+91 98765 43211',
-        profileImage: 'https://randomuser.me/api/portraits/women/44.jpg',
+        profilePhoto: 'https://randomuser.me/api/portraits/women/44.jpg',
         isActive: true,
         employeeDetails: {
             employeeId: 'EMP-102',

@@ -497,12 +497,10 @@ const ProjectDetailsScreen = () => {
                 <StandardCard key={member._id || index} variant="secondary" style={styles.teamCard}>
                   <View style={styles.teamMemberRow}>
                     <View style={styles.teamAvatar}>
-                      {member.profileImage ? (
+                      {member.profilePhoto ? (
                         <Image
                           source={{
-                            uri: member.profileImage.includes('?')
-                              ? `${member.profileImage}&t=${new Date().getTime()}`
-                              : `${member.profileImage}?t=${new Date().getTime()}`
+                            uri: getProfileImageUrl(member.profilePhoto)
                           }}
                           style={styles.teamAvatarImg}
                           resizeMode="cover"

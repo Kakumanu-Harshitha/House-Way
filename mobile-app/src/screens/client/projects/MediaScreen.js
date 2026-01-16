@@ -17,7 +17,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
-import { projectsAPI, clientsAPI, filesAPI } from "../../../utils/api";
+import { projectsAPI, clientsAPI, filesAPI, getProfileImageUrl } from "../../../utils/api";
 import { useAuth } from "../../../context/AuthContext";
 import { getServerBaseUrl } from "../../../utils/network";
 
@@ -374,9 +374,7 @@ export default function MediaScreen() {
                     <View style={styles.videoItem}>
                       <Image
                         source={{ 
-                          uri: item.thumbnail.includes('?') 
-                            ? `${item.thumbnail}&t=${new Date().getTime()}` 
-                            : `${item.thumbnail}?t=${new Date().getTime()}` 
+                          uri: getProfileImageUrl(item.thumbnail)
                         }}
                         style={styles.gridImage}
                         onError={(error) => {
@@ -427,11 +425,10 @@ export default function MediaScreen() {
               {selectedMedia.type === "photo" && (
                 <Image
                   source={{ 
-                    uri: selectedMedia.image.includes('?') 
-                      ? `${selectedMedia.image}&t=${new Date().getTime()}` 
-                      : `${selectedMedia.image}?t=${new Date().getTime()}` 
+                    uri: getProfileImageUrl(selectedMedia.image)
                   }}
                   style={styles.modalImage}
+                  resizeMode="contain"
                 />
               )}
               {selectedMedia.type === "video" && (

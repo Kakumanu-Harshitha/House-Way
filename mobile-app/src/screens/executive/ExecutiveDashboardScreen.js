@@ -153,6 +153,12 @@ const ExecutiveDashboardScreen = ({ navigation }) => {
         );
     }
 
+    const [imageErrors, setImageErrors] = useState({});
+
+    const handleImageError = (id) => {
+        setImageErrors(prev => ({ ...prev, [id]: true }));
+    };
+
     return (
         <View style={styles.container}>
             <CommonHeader title="Dashboard" userRole="Executive" showNotifications={true} />
@@ -260,14 +266,13 @@ const ExecutiveDashboardScreen = ({ navigation }) => {
                                     <Text style={styles.projectStatus}>{project.status?.replace('-', ' ')}</Text>
                                     {project.client && (
                                         <View style={styles.clientInfo}>
-                                            {project.client.profileImage ? (
+                                            {project.client.profilePhoto && !imageErrors[project.client._id] ? (
                                                 <Image 
                                                     source={{ 
-                                                        uri: project.client.profileImage.includes('?') 
-                                                            ? `${project.client.profileImage}&t=${new Date().getTime()}` 
-                                                            : `${project.client.profileImage}?t=${new Date().getTime()}` 
+                                                        uri: getProfileImageUrl(project.client.profilePhoto)
                                                     }} 
                                                     style={styles.clientAvatar} 
+                                                    onError={() => handleImageError(project.client._id)}
                                                 />
                                             ) : (
                                                 <View style={styles.clientAvatarPlaceholder}>

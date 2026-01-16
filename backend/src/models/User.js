@@ -218,6 +218,10 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 userSchema.methods.toSafeObject = function () {
   const userObject = this.toObject();
   delete userObject.password;
+  // ✅ Frontend Compatibility: Ensure profilePhoto is available (alias for profileImage)
+  if (userObject.profileImage) {
+    userObject.profilePhoto = userObject.profileImage;
+  }
   return userObject;
 };
 
@@ -230,5 +234,17 @@ userSchema.statics.findByEmail = function (email) {
 userSchema.statics.findByRole = function (role) {
   return this.find({ role, isActive: true });
 };
+
+// Configure toJSON to include profilePhoto alias and remove password
+userSchema.set('toJSON', {
+  virtuals: true,
+  transform: (doc, ret) => {
+    delete ret.password;
+    if (ret.profileImage) {
+      ret.profilePhoto = ret.profileImage;
+    }
+    return ret;
+  }
+});
 
 module.exports = mongoose.model('User', userSchema);

@@ -19,6 +19,7 @@ const VendorTeamDashboardScreen = ({ navigation }) => {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [imageError, setImageError] = useState(false);
     const [stats, setStats] = useState({
         totalProjects: 0,
         activeProjects: 0,
@@ -28,6 +29,12 @@ const VendorTeamDashboardScreen = ({ navigation }) => {
     useEffect(() => {
         loadData();
     }, []);
+
+    useEffect(() => {
+        if (user?.profilePhoto) {
+            setImageError(false);
+        }
+    }, [user?.profilePhoto]);
 
     const loadData = async () => {
         try {
@@ -110,14 +117,13 @@ const VendorTeamDashboardScreen = ({ navigation }) => {
                     
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <TouchableOpacity onPress={() => navigation.navigate('VendorTeamProfile')}>
-                            {user?.profileImage ? (
+                            {user?.profilePhoto && !imageError ? (
                                 <Image 
                                     source={{ 
-                                        uri: user.profileImage.includes('?') 
-                                            ? `${user.profileImage}&t=${new Date().getTime()}` 
-                                            : `${user.profileImage}?t=${new Date().getTime()}` 
+                                        uri: getProfileImageUrl(user.profilePhoto)
                                     }} 
                                     style={styles.headerAvatar} 
+                                    onError={() => setImageError(true)}
                                 />
                             ) : (
                                 <View style={styles.headerAvatarPlaceholder}>

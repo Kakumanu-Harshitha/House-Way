@@ -17,7 +17,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
 import { useAttendance } from '../../context/AttendanceContext';
-import { projectsAPI, usersAPI, filesAPI } from '../../utils/api';
+import { projectsAPI, usersAPI, filesAPI, getProfileImageUrl } from '../../utils/api';
 import ExecutiveBottomNavBar from '../../components/common/ExecutiveBottomNavBar';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -504,13 +504,9 @@ const ExecutiveProjectDetailScreen = ({ navigation, route }) => {
 
                     {project.client && (
                         <View style={styles.clientInfo}>
-                            {project.client.profileImage ? (
+                            {project.client.profilePhoto ? (
                                 <Image 
-                                    source={{ 
-                                        uri: project.client.profileImage.includes('?') 
-                                            ? `${project.client.profileImage}&t=${new Date().getTime()}` 
-                                            : `${project.client.profileImage}?t=${new Date().getTime()}` 
-                                    }} 
+                                    source={{ uri: getProfileImageUrl(project.client.profilePhoto) }} 
                                     style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }} 
                                 />
                             ) : (
@@ -775,13 +771,9 @@ const ExecutiveProjectDetailScreen = ({ navigation, route }) => {
                                         onPress={() => handleAssignVendor(vendor._id)}
                                         disabled={assigningVendor}
                                     >
-                                        {vendor.profileImage ? (
+                                        {vendor.profilePhoto ? (
                                             <Image 
-                                                source={{ 
-                                                    uri: vendor.profileImage.includes('?') 
-                                                        ? `${vendor.profileImage}&t=${new Date().getTime()}` 
-                                                        : `${vendor.profileImage}?t=${new Date().getTime()}` 
-                                                }} 
+                                                source={{ uri: getProfileImageUrl(vendor.profilePhoto) }} 
                                                 style={styles.vendorAvatar} 
                                             />
                                         ) : (
@@ -1389,9 +1381,7 @@ const MediaTab = ({ project, mediaFiles = [], onUpload, uploading, onDelete }) =
                                 ) : (
                                     <Image 
                                         source={{ 
-                                            uri: media.url.includes('?') 
-                                                ? `${media.url}&t=${new Date().getTime()}` 
-                                                : `${media.url}?t=${new Date().getTime()}` 
+                                            uri: getProfileImageUrl(media.url) 
                                         }} 
                                         style={styles.galleryImage} 
                                     />
@@ -1479,9 +1469,7 @@ const MediaTab = ({ project, mediaFiles = [], onUpload, uploading, onDelete }) =
                     {imageOnlyMedia.length > 0 && (
                         <Image
                             source={{ 
-                                uri: imageOnlyMedia[currentImageIndex]?.url?.includes('?') 
-                                    ? `${imageOnlyMedia[currentImageIndex]?.url}&t=${new Date().getTime()}` 
-                                    : `${imageOnlyMedia[currentImageIndex]?.url}?t=${new Date().getTime()}` 
+                                uri: getProfileImageUrl(imageOnlyMedia[currentImageIndex]?.url)
                             }}
                             resizeMode="contain"
                             style={{
@@ -1559,13 +1547,9 @@ const VendorTab = ({ project, onAssign }) => (
         {project.assignedVendors && project.assignedVendors.length > 0 ? (
             project.assignedVendors.map((vendor, index) => (
                 <View key={vendor._id || index} style={styles.vendorCard}>
-                    {vendor.profileImage ? (
+                    {vendor.profilePhoto ? (
                         <Image 
-                            source={{ 
-                                uri: vendor.profileImage.includes('?') 
-                                    ? `${vendor.profileImage}&t=${new Date().getTime()}` 
-                                    : `${vendor.profileImage}?t=${new Date().getTime()}` 
-                            }} 
+                            source={{ uri: getProfileImageUrl(vendor.profilePhoto) }} 
                             style={styles.vendorAvatar} 
                         />
                     ) : (

@@ -19,6 +19,7 @@ import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-ico
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../services/api';
 import { ordersAPI } from '../../services/ordersAPI';
+import { getProfileImageUrl } from '../../utils/api';
 import CommonHeader from '../../components/CommonHeader';
 
 const { width } = Dimensions.get('window');
@@ -1120,13 +1121,9 @@ const OwnerDashboardScreen = ({ navigation }) => {
             style={styles.clientCard}
             onPress={() => navigation.navigate('Clients', { clientId: client._id })}
           >
-            {client.profileImage ? (
+            {client.profilePhoto ? (
                 <Image
-                    source={{
-                        uri: client.profileImage.includes('?')
-                            ? `${client.profileImage}&t=${new Date().getTime()}`
-                            : `${client.profileImage}?t=${new Date().getTime()}`
-                    }}
+                    source={{ uri: getProfileImageUrl(client.profilePhoto) }}
                     style={{
                         width: 44,
                         height: 44,

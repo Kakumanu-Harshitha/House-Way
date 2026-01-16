@@ -17,7 +17,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
-import { projectsAPI, filesAPI, usersAPI } from '../../utils/api';
+import { projectsAPI, filesAPI, usersAPI, getProfileImageUrl } from '../../utils/api';
 import { useAttendance } from '../../context/AttendanceContext';
 import ScheduleTab from '../../components/clientManagement/ScheduleTab';
 import InvoicesListTab from '../../components/clientManagement/InvoicesListTab';
@@ -460,7 +460,14 @@ const ProjectDetailScreen = ({ navigation, route }) => {
               style={styles.clientInfo}
               onPress={() => navigation.navigate('ClientProfile', { clientId: project.client._id })}
             >
-              <Feather name="user" size={14} color={COLORS.textMuted} />
+              {project.client.profilePhoto ? (
+                <Image
+                  source={{ uri: getProfileImageUrl(project.client.profilePhoto) }}
+                  style={{ width: 20, height: 20, borderRadius: 10, marginRight: 6 }}
+                />
+              ) : (
+                <Feather name="user" size={14} color={COLORS.textMuted} style={{ marginRight: 6 }} />
+              )}
               <Text style={styles.clientName}>
                 {project.client.firstName} {project.client.lastName}
               </Text>
@@ -1369,9 +1376,16 @@ const TeamTab = ({ project, navigation, onRefresh, currentUser }) => {
 
       {designerEmployee && (
         <View style={styles.teamMember}>
-          <View style={styles.teamAvatar}>
-            <Feather name="user" size={20} color={COLORS.success} />
-          </View>
+          {designerEmployee.profilePhoto ? (
+            <Image 
+              source={{ uri: getProfileImageUrl(designerEmployee.profilePhoto) }} 
+              style={styles.teamAvatar} 
+            />
+          ) : (
+            <View style={styles.teamAvatar}>
+              <Feather name="user" size={20} color={COLORS.success} />
+            </View>
+          )}
           <View style={[styles.teamInfo, { flex: 1 }]}>
             <Text style={styles.teamName}>
               {designerEmployee.firstName} {designerEmployee.lastName}
@@ -1395,13 +1409,9 @@ const TeamTab = ({ project, navigation, onRefresh, currentUser }) => {
 
       {executiveEmployee ? (
         <View style={styles.teamMember}>
-          {executiveEmployee.profileImage ? (
+          {executiveEmployee.profilePhoto ? (
             <Image 
-              source={{ 
-                uri: executiveEmployee.profileImage.includes('?') 
-                  ? `${executiveEmployee.profileImage}&t=${new Date().getTime()}` 
-                  : `${executiveEmployee.profileImage}?t=${new Date().getTime()}` 
-              }} 
+              source={{ uri: getProfileImageUrl(executiveEmployee.profilePhoto) }} 
               style={styles.teamAvatar} 
             />
           ) : (
@@ -1479,13 +1489,9 @@ const TeamTab = ({ project, navigation, onRefresh, currentUser }) => {
                     onPress={() => handleAssignEmployee(emp._id)}
                     disabled={assigning}
                   >
-                    {emp.profileImage ? (
+                    {emp.profilePhoto ? (
                       <Image 
-                        source={{ 
-                          uri: emp.profileImage.includes('?') 
-                            ? `${emp.profileImage}&t=${new Date().getTime()}` 
-                            : `${emp.profileImage}?t=${new Date().getTime()}` 
-                        }} 
+                        source={{ uri: getProfileImageUrl(emp.profilePhoto) }} 
                         style={styles.teamAvatar} 
                       />
                     ) : (

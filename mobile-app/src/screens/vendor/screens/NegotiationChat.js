@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, A
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import theme from '../../../styles/theme';
-import { purchaseOrdersAPI } from '../../../utils/api';
+import { purchaseOrdersAPI, getProfileImageUrl } from '../../../utils/api';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function NegotiationChat({ route, navigation }) {
@@ -190,13 +190,10 @@ export default function NegotiationChat({ route, navigation }) {
   }
 
   const renderProfileImage = () => {
-    if (user?.profileImage) {
-      const profileImageUri = user.profileImage.includes('?') 
-        ? `${user.profileImage}&t=${new Date().getTime()}` 
-        : `${user.profileImage}?t=${new Date().getTime()}`;
+    if (user?.profilePhoto) {
       return (
         <Image
-          source={{ uri: profileImageUri }}
+          source={{ uri: getProfileImageUrl(user.profilePhoto) }}
           style={styles.profileImage}
           resizeMode="cover"
         />

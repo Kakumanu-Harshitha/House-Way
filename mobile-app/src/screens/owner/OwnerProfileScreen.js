@@ -18,7 +18,7 @@ import {
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../context/AuthContext';
-import { authAPI, usersAPI } from '../../utils/api';
+import { authAPI, usersAPI, getProfileImageUrl } from '../../utils/api';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
 
 const OwnerProfileScreen = ({ navigation }) => {
@@ -32,7 +32,7 @@ const OwnerProfileScreen = ({ navigation }) => {
     email: user?.email || '',
     phone: user?.phone || '',
   });
-  const [profileImage, setProfileImage] = useState(user?.profileImage || null);
+  const [profilePhoto, setProfilePhoto] = useState(user?.profilePhoto || null);
   
   const [refreshing, setRefreshing] = useState(false);
 
@@ -42,16 +42,8 @@ const OwnerProfileScreen = ({ navigation }) => {
       const response = await usersAPI.getUserById(user._id);
       if (response.success) {
         const userData = response.data.user;
-        const timestamp = new Date().getTime();
         
-        // Add timestamp to profile image to bust cache globally
-        if (userData.profileImage) {
-            userData.profileImage = userData.profileImage.includes('?') 
-                ? `${userData.profileImage}&t=${timestamp}` 
-                : `${userData.profileImage}?t=${timestamp}`;
-        }
-
-        setProfileImage(userData.profileImage || null);
+        setProfilePhoto(userData.profileImage || null);
         setFormData({
           firstName: userData.firstName || '',
           lastName: userData.lastName || '',
@@ -61,6 +53,10 @@ const OwnerProfileScreen = ({ navigation }) => {
         
         // Sync global state if needed (or always to keep timestamp fresh)
         if (syncUser) {
+           // Normalize profileImage to profilePhoto for frontend
+           if (userData.profileImage) {
+             userData.profilePhoto = userData.profileImage;
+           }
            syncUser(userData);
         }
       }
@@ -118,7 +114,19 @@ const OwnerProfileScreen = ({ navigation }) => {
     setIsEditing(false);
   };
 
+  const showAlert = (title, message) => {
+    if (Platform.OS === 'web') {
+      window.alert(`${title}: ${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
   const handleImagePicker = () => {
+    if (Platform.OS === 'web') {
+        handleImageSelection('gallery');
+        return;
+    }
     Alert.alert(
       'Profile Photo Options',
       'Choose how you want to update your profile photo',
@@ -131,7 +139,7 @@ const OwnerProfileScreen = ({ navigation }) => {
           text: '🖼️ Choose from Gallery',
           onPress: () => handleImageSelection('gallery')
         },
-        ...(profileImage ? [{
+        ...(profilePhoto ? [{
           text: '🗑️ Remove Photo',
           onPress: () => deletePhoto(),
           style: 'destructive'
@@ -145,14 +153,57 @@ const OwnerProfileScreen = ({ navigation }) => {
   };
 
   const handleImageSelection = async (source) => {
+    console.log('handleImageSelection called with source:', source);
     try {
-      const { status } = source === 'camera' 
-        ? await ImagePicker.requestCameraPermissionsAsync()
-        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (Platform.OS === 'web') {
+        // Web file input handling
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
 
-      if (status !== 'granted') {
-        Alert.alert('Permission Required', `Please allow access to ${source}`);
+        if (source === 'camera') {
+            input.capture = 'environment'; // Use camera
+        }
+
+        input.onchange = async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showAlert('Error', 'Please select an image file');
+                return;
+            }
+
+            // Validate file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                showAlert('Error', 'Image size should be less than 5MB');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('photo', file, file.name);
+                await uploadProfilePhoto(formData);
+            } catch (error) {
+                console.error('Web upload preparation error:', error);
+            }
+        };
+
+        input.click();
         return;
+      }
+
+      if (Platform.OS !== 'web') {
+          const { status } = source === 'camera' 
+            ? await ImagePicker.requestCameraPermissionsAsync()
+            : await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+          console.log('Permission status:', status);
+          if (status !== 'granted') {
+            showAlert('Permission Required', `Please allow access to ${source}`);
+            return;
+          }
       }
 
       let result;
@@ -172,62 +223,92 @@ const OwnerProfileScreen = ({ navigation }) => {
         });
       }
 
+      console.log('ImagePicker result:', result);
+
       if (!result.canceled && result.assets[0]) {
-        await uploadProfilePhoto(result.assets[0].uri);
+        const asset = result.assets[0];
+        const localUri = asset.uri;
+        const filename = localUri.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image`;
+        
+        const formData = new FormData();
+        formData.append('photo', { uri: localUri, name: filename, type });
+        
+        console.log('Uploading photo from mobile:', localUri);
+        await uploadProfilePhoto(formData);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick image');
+      console.error('Image picker error:', error);
+      showAlert('Error', 'Failed to pick image');
     }
   };
 
-  const uploadProfilePhoto = async (imageUri) => {
+  const uploadProfilePhoto = async (formData) => {
+    console.log('uploadProfilePhoto start');
     try {
-      const formDataUpload = new FormData();
-      const filename = imageUri.split('/').pop() || 'profile.jpg';
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : 'image/jpeg';
+      console.log('Sending API request...');
+      const uploadResponse = await usersAPI.uploadProfilePhoto(formData);
+      console.log('API response:', uploadResponse);
 
-      if (Platform.OS === 'web') {
-        const response = await fetch(imageUri);
-        const blob = await response.blob();
-        formDataUpload.append('photo', blob, filename);
-      } else {
-        formDataUpload.append('photo', { uri: imageUri, name: filename, type });
-      }
-
-      const uploadResponse = await usersAPI.uploadProfilePhoto(formDataUpload);
       if (uploadResponse.success) {
-        const timestamp = new Date().getTime();
         const newImage = uploadResponse.data.profileImage;
-        const imageWithTimestamp = newImage.includes('?') ? `${newImage}&t=${timestamp}` : `${newImage}?t=${timestamp}`;
 
-        setProfileImage(imageWithTimestamp);
+        setProfilePhoto(newImage);
         if (syncUser && user) {
-          await syncUser({ ...user, profileImage: imageWithTimestamp });
+          await syncUser({ ...user, profilePhoto: newImage });
         }
-        Alert.alert('Success', 'Profile photo updated successfully');
+        showAlert('Success', 'Profile photo updated successfully');
       } else {
-        Alert.alert('Error', uploadResponse.message || 'Failed to upload photo');
+        showAlert('Error', uploadResponse.message || 'Failed to upload photo');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to upload profile photo');
+      console.error('Upload photo error:', error);
+      showAlert('Error', 'Failed to upload profile photo');
     }
   };
 
   const deletePhoto = async () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to delete your profile photo?')) {
+        await performDeletePhoto();
+      }
+    } else {
+      Alert.alert(
+        'Delete Photo',
+        'Are you sure you want to delete your profile photo?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: performDeletePhoto
+          },
+        ]
+      );
+    }
+  };
+
+  const performDeletePhoto = async () => {
     try {
+      console.log('Deleting profile photo...');
       const response = await usersAPI.deleteProfilePhoto();
+      console.log('Delete photo response:', response);
+
       if (response.success) {
-        setProfileImage(null);
+        setProfilePhoto(null);
         if (syncUser && user) {
-          await syncUser({ ...user, profileImage: null });
+          console.log('Syncing user with null profilePhoto');
+          await syncUser({ ...user, profilePhoto: null });
         }
-        Alert.alert('Success', 'Profile photo removed successfully');
+        showAlert('Success', 'Profile photo removed successfully');
       } else {
-        Alert.alert('Error', response.message || 'Failed to delete photo');
+        console.error('Delete photo failed:', response);
+        showAlert('Error', response.message || 'Failed to delete photo');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to delete profile photo');
+      console.error('Delete photo error:', error);
+      showAlert('Error', 'Failed to delete profile photo');
     }
   };
 
@@ -260,11 +341,7 @@ const OwnerProfileScreen = ({ navigation }) => {
     } catch (error) {
       console.error('[OwnerProfile] Logout error:', error);
       const errorMsg = 'Failed to logout. Please try again.';
-      if (Platform.OS === 'web') {
-        window.alert(errorMsg);
-      } else {
-        Alert.alert('Error', errorMsg);
-      }
+      showAlert('Error', errorMsg);
     }
   };
 
@@ -300,11 +377,11 @@ const OwnerProfileScreen = ({ navigation }) => {
         <View style={styles.profileCard}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
-              {profileImage ? (
+              {profilePhoto ? (
                 <Image
-                  source={{ uri: profileImage }}
+                  source={{ uri: getProfileImageUrl(profilePhoto) }}
                   style={styles.avatarImage}
-                  onError={() => setProfileImage(null)}
+                  onError={() => setProfilePhoto(null)}
                 />
               ) : (
                 <Text style={styles.avatarText}>{getInitials()}</Text>
@@ -313,7 +390,7 @@ const OwnerProfileScreen = ({ navigation }) => {
             <TouchableOpacity style={styles.cameraButton} onPress={handleImagePicker}>
               <Ionicons name="camera" size={16} color="#FFFFFF" />
             </TouchableOpacity>
-            {profileImage && (
+            {profilePhoto && (
               <TouchableOpacity style={styles.deleteBadge} onPress={deletePhoto}>
                 <Ionicons name="close" size={14} color="#FFFFFF" />
               </TouchableOpacity>

@@ -18,6 +18,7 @@ import {
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../services/api';
+import { getProfileImageUrl } from '../../utils/api';
 import AdminNavbar from '../../components/AdminNavbar';
 
 // Attendance Stats Component
@@ -47,6 +48,7 @@ const AttendanceStats = ({ stats }) => {
 // Employee List Item
 const EmployeeListItem = ({ employee, onPress }) => {
     const [attendance, setAttendance] = useState(null);
+    const [imageError, setImageError] = useState(false);
 
     useEffect(() => {
         fetchEmployeeAttendance();
@@ -66,10 +68,11 @@ const EmployeeListItem = ({ employee, onPress }) => {
 
     return (
         <TouchableOpacity style={styles.listItem} onPress={onPress}>
-            {employee.profileImage ? (
+            {employee.profilePhoto && !imageError ? (
                 <Image
-                    source={{ uri: employee.profileImage.includes('?') ? `${employee.profileImage}&t=${new Date().getTime()}` : `${employee.profileImage}?t=${new Date().getTime()}` }}
+                    source={{ uri: getProfileImageUrl(employee.profilePhoto) }}
                     style={[styles.employeeAvatar, { backgroundColor: 'transparent' }]}
+                    onError={() => setImageError(true)}
                 />
             ) : (
                 <View style={styles.employeeAvatar}>

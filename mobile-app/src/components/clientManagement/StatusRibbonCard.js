@@ -58,9 +58,7 @@ const StatusRibbonCard = ({
             {avatar ? (
               <Image 
                 source={{ 
-                  uri: avatar.includes('?') 
-                    ? `${avatar}&t=${new Date().getTime()}` 
-                    : `${avatar}?t=${new Date().getTime()}` 
+                  uri: getProfileImageUrl(avatar)
                 }} 
                 style={styles.avatar} 
               />

@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { usersAPI, purchaseOrdersAPI, vendorInvoicesAPI } from '../../utils/api';
+import { usersAPI, purchaseOrdersAPI, vendorInvoicesAPI, getProfileImageUrl } from '../../utils/api';
 import AdminNavbar from '../../components/AdminNavbar';
 
 const getId = (value) => (typeof value === 'string' ? value : value?._id);
@@ -23,34 +23,39 @@ const getInvoiceAmount = (invoice) => Number(invoice?.totalAmount ?? invoice?.am
 const getOrderFinalAmount = (order) => Number(order?.negotiation?.finalAmount ?? order?.finalAmount ?? order?.totalAmount ?? 0);
 
 // Vendor List Item
-const VendorListItem = ({ vendor, onPress, pendingCount, ordersCount }) => (
-  <TouchableOpacity style={styles.listItem} onPress={onPress}>
-    {vendor.profileImage ? (
-      <Image
-        source={{ uri: vendor.profileImage.includes('?') ? `${vendor.profileImage}&t=${new Date().getTime()}` : `${vendor.profileImage}?t=${new Date().getTime()}` }}
-        style={styles.vendorAvatar}
-      />
-    ) : (
-      <View style={styles.vendorAvatar}>
-        <Text style={styles.avatarText}>
-          {vendor.vendorDetails?.companyName?.[0] || vendor.firstName?.[0] || '?'}
+const VendorListItem = ({ vendor, onPress, pendingCount, ordersCount }) => {
+  const [imageError, setImageError] = useState(false);
+
+  return (
+    <TouchableOpacity style={styles.listItem} onPress={onPress}>
+      {vendor.profilePhoto && !imageError ? (
+        <Image
+          source={{ uri: getProfileImageUrl(vendor.profilePhoto) }}
+          style={styles.vendorAvatar}
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <View style={styles.vendorAvatar}>
+          <Text style={styles.avatarText}>
+            {vendor.vendorDetails?.companyName?.[0] || vendor.firstName?.[0] || '?'}
+          </Text>
+        </View>
+      )}
+      <View style={styles.listContent}>
+        <Text style={styles.listTitle}>
+          {vendor.vendorDetails?.companyName || `${vendor.firstName} ${vendor.lastName}`}
+        </Text>
+        <Text style={styles.listSubtitle}>
+          {ordersCount > 0 ? `${ordersCount} active order${ordersCount !== 1 ? 's' : ''} • ` : ''}
+          {pendingCount} pending action{pendingCount !== 1 ? 's' : ''}
         </Text>
       </View>
-    )}
-    <View style={styles.listContent}>
-      <Text style={styles.listTitle}>
-        {vendor.vendorDetails?.companyName || `${vendor.firstName} ${vendor.lastName}`}
-      </Text>
-      <Text style={styles.listSubtitle}>
-        {ordersCount > 0 ? `${ordersCount} active order${ordersCount !== 1 ? 's' : ''} • ` : ''}
-        {pendingCount} pending action{pendingCount !== 1 ? 's' : ''}
-      </Text>
-    </View>
-    <View style={styles.pendingBadge}>
-      <Text style={styles.pendingText}>{pendingCount} ⚡</Text>
-    </View>
-  </TouchableOpacity>
-);
+      <View style={styles.pendingBadge}>
+        <Text style={styles.pendingText}>{pendingCount} ⚡</Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 // Vendor Projects Modal - shows orders and invoices for a single vendor
 const VendorProjectsModal = ({ visible, vendor, onClose, onSelectInvoice, onSelectOrder }) => {

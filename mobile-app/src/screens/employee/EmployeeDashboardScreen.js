@@ -245,12 +245,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
   },
-  profileImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: theme.colors.background.secondary,
-  },
   profilePlaceholder: {
     width: 60,
     height: 60,

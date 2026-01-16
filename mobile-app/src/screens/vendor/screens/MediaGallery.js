@@ -60,7 +60,7 @@ export default function MediaGallery({ navigation }) {
               <View style={{ height: 140, borderRadius: 12, backgroundColor: '#eee', alignItems:'center', justifyContent:'center' }}>
                 {it.uri ? (
                   <Image 
-                    source={{ uri: it.uri }} 
+                    source={{ uri: getProfileImageUrl(it.uri) }} 
                     style={{ width: '100%', height: '100%', borderRadius: 12 }} 
                   />
                 ) : (

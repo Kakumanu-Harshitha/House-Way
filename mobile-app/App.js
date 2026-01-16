@@ -8,6 +8,7 @@ import { AuthProvider } from './src/context/AuthContext';
 import { AttendanceProvider } from './src/context/AttendanceContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import WebStyleInjector from './src/components/WebStyleInjector.js';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 export default function App() {
   useEffect(() => {
@@ -23,15 +24,17 @@ export default function App() {
   console.log('[App] Rendering App component');
 
   return (
-    <AuthProvider>
-      <AttendanceProvider>
-        <View style={[styles.container, Platform.OS === 'web' && styles.webContainer]}>
-          <WebStyleInjector />
-          <StatusBar style="auto" />
-          <AppNavigator />
-        </View>
-      </AttendanceProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AttendanceProvider>
+          <View style={[styles.container, Platform.OS === 'web' && styles.webContainer]}>
+            <WebStyleInjector />
+            <StatusBar style="auto" />
+            <AppNavigator />
+          </View>
+        </AttendanceProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

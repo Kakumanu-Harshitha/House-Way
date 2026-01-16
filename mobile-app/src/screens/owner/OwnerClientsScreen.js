@@ -18,12 +18,14 @@ import {
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../services/api';
+import { getProfileImageUrl } from '../../utils/api';
 import AdminNavbar from '../../components/AdminNavbar';
 
 // Client List Item Component
 const ClientListItem = ({ client, onPress }) => {
     const [clientProjects, setClientProjects] = useState([]);
     const [totalValue, setTotalValue] = useState(0);
+    const [imageError, setImageError] = useState(false);
 
     useEffect(() => {
         // Fetch projects for this client
@@ -47,10 +49,11 @@ const ClientListItem = ({ client, onPress }) => {
 
     return (
         <TouchableOpacity style={styles.listItem} onPress={onPress}>
-            {client.profileImage ? (
+            {client.profilePhoto && !imageError ? (
                       <Image
-                        source={{ uri: client.profileImage.includes('?') ? `${client.profileImage}&t=${new Date().getTime()}` : `${client.profileImage}?t=${new Date().getTime()}` }}
+                        source={{ uri: getProfileImageUrl(client.profilePhoto) }}
                         style={styles.clientAvatar}
+                        onError={() => setImageError(true)}
                       />
                     ) : (
                 <View style={styles.clientAvatar}>

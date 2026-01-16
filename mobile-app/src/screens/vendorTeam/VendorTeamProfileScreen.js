@@ -16,7 +16,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../context/AuthContext';
-import { usersAPI, authAPI } from '../../utils/api';
+import { usersAPI, authAPI, getProfileImageUrl } from '../../utils/api';
 import ToastMessage from '../../components/common/ToastMessage';
 import theme from '../../styles/theme';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
@@ -25,7 +25,7 @@ export default function VendorTeamProfileScreen({ navigation }) {
     const { user, updateUser, syncUser, logout } = useAuth();
     const [loading, setLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [profileImage, setProfileImage] = useState(user?.profileImage || null);
+    const [profilePhoto, setProfilePhoto] = useState(user?.profilePhoto || null);
 
     const [profile, setProfile] = useState({
         name: '',
@@ -49,7 +49,7 @@ export default function VendorTeamProfileScreen({ navigation }) {
                 role: user.role || 'employee',
                 subRole: user.subRole || 'vendorTeam',
             });
-            setProfileImage(user.profileImage || null);
+            setProfilePhoto(user.profilePhoto || null);
         }
     }, [user]);
 
@@ -70,14 +70,6 @@ export default function VendorTeamProfileScreen({ navigation }) {
             if (response.success && response.data) {
                 const userData = response.data.user || response.data;
                 
-                // Add timestamp to profile image to bust cache globally
-                if (userData.profileImage) {
-                    const timestamp = new Date().getTime();
-                    userData.profileImage = userData.profileImage.includes('?') 
-                        ? `${userData.profileImage}&t=${timestamp}` 
-                        : `${userData.profileImage}?t=${timestamp}`;
-                }
-
                 if (syncUser) {
                     await syncUser(userData);
                 }
@@ -88,7 +80,7 @@ export default function VendorTeamProfileScreen({ navigation }) {
                     role: userData.role || 'employee',
                     subRole: userData.subRole || 'vendorTeam',
                 });
-                setProfileImage(userData.profileImage || null);
+                setProfilePhoto(userData.profilePhoto || null);
             }
         } catch (error) {
             console.error('Refresh error:', error);
@@ -99,6 +91,12 @@ export default function VendorTeamProfileScreen({ navigation }) {
     };
 
     const handleImagePicker = () => {
+        if (Platform.OS === 'web') {
+            // On web, directly open file picker
+            handleImageSelection('gallery');
+            return;
+        }
+
         Alert.alert(
             'Profile Photo Options',
             'Choose how you want to update your profile photo',
@@ -111,7 +109,7 @@ export default function VendorTeamProfileScreen({ navigation }) {
                     text: '🖼️ Choose from Gallery',
                     onPress: () => handleImageSelection('gallery')
                 },
-                ...(profileImage ? [{
+                ...(profilePhoto ? [{
                     text: '🗑️ Remove Photo',
                     onPress: () => deletePhoto(),
                     style: 'destructive'
@@ -125,16 +123,59 @@ export default function VendorTeamProfileScreen({ navigation }) {
     };
 
     const handleImageSelection = async (type) => {
+        console.log('handleImageSelection called with type:', type);
         try {
-            const permissionMethod = type === 'camera' 
-                ? ImagePicker.requestCameraPermissionsAsync 
-                : ImagePicker.requestMediaLibraryPermissionsAsync;
-                
-            const { status } = await permissionMethod();
-            
-            if (status !== 'granted') {
-                showToast(`Permission to access ${type} was denied`, 'error');
+            if (Platform.OS === 'web') {
+                // Web file input handling
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+
+                if (type === 'camera') {
+                    input.capture = 'environment'; // Use camera
+                }
+
+                input.onchange = async (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    // Validate file type
+                    if (!file.type.startsWith('image/')) {
+                        showToast('Please select an image file', 'error');
+                        return;
+                    }
+
+                    // Validate file size (5MB limit)
+                    if (file.size > 5 * 1024 * 1024) {
+                        showToast('Image size should be less than 5MB', 'error');
+                        return;
+                    }
+
+                    try {
+                        const formData = new FormData();
+                        formData.append('photo', file, file.name);
+                        await uploadProfilePhoto(formData);
+                    } catch (error) {
+                        console.error('Web upload preparation error:', error);
+                    }
+                };
+
+                input.click();
                 return;
+            }
+
+            if (Platform.OS !== 'web') {
+                const permissionMethod = type === 'camera' 
+                    ? ImagePicker.requestCameraPermissionsAsync 
+                    : ImagePicker.requestMediaLibraryPermissionsAsync;
+                    
+                const { status } = await permissionMethod();
+                console.log('Permission status:', status);
+                
+                if (status !== 'granted') {
+                    showToast(`Permission to access ${type} was denied`, 'error');
+                    return;
+                }
             }
 
             const launchMethod = type === 'camera'
@@ -148,8 +189,20 @@ export default function VendorTeamProfileScreen({ navigation }) {
                 quality: 0.8,
             });
 
+            console.log('ImagePicker result:', result);
+
             if (!result.canceled && result.assets[0]) {
-                await uploadProfilePhoto(result.assets[0].uri);
+                const asset = result.assets[0];
+                const localUri = asset.uri;
+                const filename = localUri.split('/').pop();
+                const match = /\.(\w+)$/.exec(filename);
+                const fileType = match ? `image/${match[1]}` : `image`;
+                
+                const formData = new FormData();
+                formData.append('photo', { uri: localUri, name: filename, type: fileType });
+                
+                console.log('Uploading photo from mobile:', localUri);
+                await uploadProfilePhoto(formData);
             }
         } catch (error) {
             console.error('Image selection error:', error);
@@ -157,36 +210,21 @@ export default function VendorTeamProfileScreen({ navigation }) {
         }
     };
 
-    const uploadProfilePhoto = async (imageUri) => {
+    const uploadProfilePhoto = async (formData) => {
+        console.log('uploadProfilePhoto start');
         try {
             setIsSaving(true);
-            const formData = new FormData();
-            const filename = imageUri.split('/').pop() || 'profile.jpg';
-            const match = /\.(\w+)$/.exec(filename);
-            const type = match ? `image/${match[1]}` : `image/jpeg`;
-
-            if (Platform.OS === 'web') {
-                try {
-                    const response = await fetch(imageUri);
-                    const blob = await response.blob();
-                    formData.append('photo', blob, filename);
-                } catch (fetchError) {
-                    console.error('Error fetching image blob:', fetchError);
-                    formData.append('photo', { uri: imageUri, name: filename, type });
-                }
-            } else {
-                formData.append('photo', { uri: imageUri, name: filename, type });
-            }
-
+            
+            console.log('Sending API request...');
             const uploadResponse = await usersAPI.uploadProfilePhoto(formData);
-            if (uploadResponse.success) {
-                const timestamp = new Date().getTime();
-                const newImage = uploadResponse.data.profileImage;
-                const imageWithTimestamp = newImage.includes('?') ? `${newImage}&t=${timestamp}` : `${newImage}?t=${timestamp}`;
+            console.log('API response:', uploadResponse);
 
-                setProfileImage(imageWithTimestamp);
+            if (uploadResponse.success) {
+                const newImage = uploadResponse.data.profilePhoto || uploadResponse.data.profileImage;
+
+                setProfilePhoto(newImage);
                 if (syncUser) {
-                    syncUser({ ...user, profileImage: imageWithTimestamp });
+                    await syncUser({ ...user, profilePhoto: newImage });
                 }
                 showToast('Profile photo updated!', 'success');
             } else {
@@ -201,16 +239,42 @@ export default function VendorTeamProfileScreen({ navigation }) {
     };
 
     const deletePhoto = async () => {
+        if (Platform.OS === 'web') {
+            if (window.confirm('Are you sure you want to delete your profile photo?')) {
+                await performDeletePhoto();
+            }
+        } else {
+            Alert.alert(
+                'Delete Photo',
+                'Are you sure you want to delete your profile photo?',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Delete',
+                        style: 'destructive',
+                        onPress: performDeletePhoto
+                    }
+                ]
+            );
+        }
+    };
+
+    const performDeletePhoto = async () => {
         try {
+            console.log('Deleting profile photo...');
             setIsSaving(true);
             const response = await usersAPI.deleteProfilePhoto();
+            console.log('Delete photo response:', response);
+            
             if (response.success) {
-                setProfileImage(null);
+                setProfilePhoto(null);
                 if (syncUser) {
-                    syncUser({ ...user, profileImage: null });
+                    console.log('Syncing user with null profilePhoto');
+                    await syncUser({ ...user, profilePhoto: null });
                 }
                 showToast('Profile photo removed', 'success');
             } else {
+                console.error('Delete photo failed:', response);
                 showToast(response.message || 'Failed to delete photo', 'error');
             }
         } catch (error) {
@@ -233,8 +297,25 @@ export default function VendorTeamProfileScreen({ navigation }) {
     };
 
     const handleLogout = () => {
-        showToast('Logging out...', 'info');
-        setTimeout(() => performLogout(), 1000);
+        if (Platform.OS === 'web') {
+            const confirmed = window.confirm('Are you sure you want to logout?');
+            if (confirmed) {
+                performLogout();
+            }
+        } else {
+            Alert.alert(
+                'Logout',
+                'Are you sure you want to logout?',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Logout',
+                        style: 'destructive',
+                        onPress: performLogout
+                    }
+                ]
+            );
+        }
     };
 
     const MenuItem = ({ icon, title, subtitle, onPress, danger }) => (
@@ -288,14 +369,11 @@ export default function VendorTeamProfileScreen({ navigation }) {
                 <View style={styles.profileCard}>
                     <View style={styles.avatarContainer}>
                         <TouchableOpacity onPress={handleImagePicker} disabled={isSaving}>
-                            {profileImage ? (
+                            {profilePhoto ? (
                                 <Image 
-                                    source={{ 
-                                        uri: profileImage.includes('?') 
-                                            ? `${profileImage}&t=${new Date().getTime()}` 
-                                            : `${profileImage}?t=${new Date().getTime()}` 
-                                    }} 
-                                    style={styles.avatar} 
+                                    source={{ uri: getProfileImageUrl(profilePhoto) }} 
+                                    style={styles.avatar}
+                                    onError={() => setProfilePhoto(null)}
                                 />
                             ) : (
                                 <View style={styles.avatarPlaceholder}>
@@ -312,7 +390,7 @@ export default function VendorTeamProfileScreen({ navigation }) {
                                 )}
                             </View>
                         </TouchableOpacity>
-                        {profileImage && !isSaving && (
+                        {profilePhoto && !isSaving && (
                             <TouchableOpacity style={styles.deleteBadge} onPress={deletePhoto}>
                                 <Feather name="x" size={12} color={theme.colors.text.white} />
                             </TouchableOpacity>
@@ -321,235 +399,225 @@ export default function VendorTeamProfileScreen({ navigation }) {
                     <Text style={styles.profileName}>{profile.name || 'User'}</Text>
                     <Text style={styles.profileEmail}>{profile.email}</Text>
                     <View style={styles.roleBadge}>
-                        <Feather name="package" size={14} color={theme.colors.primary[600]} />
-                        <Text style={styles.roleText}>Vendor Team</Text>
+                        <Text style={styles.roleText}>
+                            {(profile.subRole || profile.role).replace(/([A-Z])/g, ' $1').trim()}
+                        </Text>
                     </View>
                 </View>
 
-                {/* Account Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Account</Text>
-                    <View style={styles.menuContainer}>
-                        <MenuItem
-                            icon="user"
-                            title="Edit Profile"
-                            subtitle="Update your personal information"
-                            onPress={() => showToast('Edit profile coming soon', 'info')}
-                        />
-                        <MenuItem
-                            icon="phone"
-                            title="Phone Number"
-                            subtitle={profile.phone}
-                            onPress={() => { }}
-                        />
-                    </View>
-                </View>
+                {/* Menu Items */}
+                <View style={styles.menuContainer}>
+                    <MenuItem 
+                        icon="user" 
+                        title="Edit Profile" 
+                        subtitle="Update personal details"
+                        onPress={() => showToast('Feature coming soon!', 'info')}
+                    />
+                    
+                    <MenuItem 
+                        icon="lock" 
+                        title="Change Password" 
+                        subtitle="Update your password"
+                        onPress={() => setShowPasswordModal(true)}
+                    />
 
-                {/* Security Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Security</Text>
-                    <View style={styles.menuContainer}>
-                        <MenuItem
-                            icon="lock"
-                            title="Change Password"
-                            subtitle="Update your password"
-                            onPress={() => setShowPasswordModal(true)}
-                        />
-                    </View>
-                </View>
+                    <MenuItem 
+                        icon="bell" 
+                        title="Notifications" 
+                        subtitle="Manage notification preferences"
+                        onPress={() => navigation.navigate('NotificationsScreen')}
+                    />
 
-                {/* More Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>More</Text>
-                    <View style={styles.menuContainer}>
-                        <MenuItem
-                            icon="info"
-                            title="About Houseway"
-                            subtitle="Learn more about us"
-                            onPress={() => navigation.navigate('AboutHouseway')}
-                        />
-                        <MenuItem
-                            icon="help-circle"
-                            title="Help & Support"
-                            subtitle="Get help with your account"
-                            onPress={() => showToast('Contact: support@houseway.co.in', 'info')}
-                        />
-                    </View>
-                </View>
+                    <MenuItem 
+                        icon="help-circle" 
+                        title="Help & Support" 
+                        subtitle="Contact support or view FAQs"
+                        onPress={() => navigation.navigate('HelpScreen')}
+                    />
 
-                {/* Logout Section */}
-                <View style={styles.section}>
-                    <View style={styles.menuContainer}>
-                        <MenuItem
-                            icon="log-out"
-                            title="Logout"
-                            subtitle="Sign out from your account"
-                            onPress={handleLogout}
-                            danger
-                        />
-                    </View>
-                </View>
+                    <View style={styles.divider} />
 
-                <View style={{ height: 100 }} />
+                    <MenuItem 
+                        icon="log-out" 
+                        title="Logout" 
+                        danger
+                        onPress={handleLogout}
+                    />
+                </View>
             </ScrollView>
 
-            <ChangePasswordModal 
-                visible={showPasswordModal} 
-                onClose={() => setShowPasswordModal(false)} 
+            <ChangePasswordModal
+                visible={showPasswordModal}
+                onClose={() => setShowPasswordModal(false)}
             />
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.colors.background.primary },
-    scrollContent: { flexGrow: 1, paddingBottom: 20 },
-    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background.primary },
-    loadingText: { marginTop: 12, fontSize: 16, color: theme.colors.text.secondary },
+    container: {
+        flex: 1,
+        backgroundColor: theme.colors.background,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: theme.colors.background,
+    },
+    loadingText: {
+        marginTop: 10,
+        color: theme.colors.text.secondary,
+        fontSize: 16,
+    },
+    scrollContent: {
+        paddingBottom: 30,
+    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingTop: Platform.OS === 'ios' ? 60 : 50,
         paddingHorizontal: 20,
-        paddingBottom: 16,
+        paddingTop: Platform.OS === 'ios' ? 60 : 40,
+        paddingBottom: 20,
+        backgroundColor: theme.colors.surface,
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: theme.colors.text.primary,
     },
     backBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        backgroundColor: theme.colors.background.card,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: theme.colors.primary[100],
+        padding: 8,
     },
-    headerTitle: { fontSize: 20, fontWeight: '700', color: theme.colors.text.primary },
     profileCard: {
-        backgroundColor: theme.colors.background.card,
-        margin: 16,
-        borderRadius: 16,
+        backgroundColor: theme.colors.surface,
+        margin: 20,
+        borderRadius: 20,
         padding: 24,
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: theme.colors.primary[100],
+        ...theme.shadows.md,
     },
-    avatarContainer: { marginBottom: 16, position: 'relative' },
-    avatar: { width: 100, height: 100, borderRadius: 50 },
+    avatarContainer: {
+        position: 'relative',
+        marginBottom: 16,
+    },
+    avatar: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        borderWidth: 4,
+        borderColor: theme.colors.background,
+    },
     avatarPlaceholder: {
         width: 100,
         height: 100,
         borderRadius: 50,
-        backgroundColor: theme.colors.primary[600],
+        backgroundColor: theme.colors.primary[100],
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 4,
+        borderColor: theme.colors.background,
     },
-    avatarText: { fontSize: 36, fontWeight: '700', color: theme.colors.text.white },
+    avatarText: {
+        fontSize: 36,
+        fontWeight: 'bold',
+        color: theme.colors.primary[600],
+    },
     editBadge: {
         position: 'absolute',
         bottom: 0,
         right: 0,
+        backgroundColor: theme.colors.primary[600],
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: theme.colors.primary[600],
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 3,
-        borderColor: theme.colors.background.card,
+        borderColor: theme.colors.surface,
     },
     deleteBadge: {
         position: 'absolute',
         top: 0,
         right: 0,
+        backgroundColor: theme.colors.error[500],
         width: 24,
         height: 24,
         borderRadius: 12,
-        backgroundColor: theme.colors.error[600],
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: theme.colors.background.card,
+        borderColor: theme.colors.surface,
     },
-    profileName: { fontSize: 24, fontWeight: '600', color: theme.colors.text.primary, marginBottom: 4 },
-    profileEmail: { fontSize: 14, color: theme.colors.text.secondary, marginBottom: 12 },
-    roleBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: theme.colors.primary[100],
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        marginTop: 8,
+    profileName: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: theme.colors.text.primary,
+        marginBottom: 4,
     },
-    roleText: { fontSize: 14, color: theme.colors.primary[600], fontWeight: '500', marginLeft: 6 },
-    section: { paddingHorizontal: 16, marginBottom: 24 },
-    sectionTitle: {
+    profileEmail: {
         fontSize: 14,
-        fontWeight: '600',
         color: theme.colors.text.secondary,
         marginBottom: 12,
-        textTransform: 'uppercase',
+    },
+    roleBadge: {
+        backgroundColor: theme.colors.primary[50],
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+    },
+    roleText: {
+        color: theme.colors.primary[700],
+        fontSize: 12,
+        fontWeight: '600',
+        textTransform: 'capitalize',
     },
     menuContainer: {
-        backgroundColor: theme.colors.background.card,
-        borderRadius: 12,
-        overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: theme.colors.primary[100],
+        backgroundColor: theme.colors.surface,
+        marginHorizontal: 20,
+        borderRadius: 20,
+        padding: 8,
+        ...theme.shadows.sm,
     },
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: theme.colors.primary[100],
+        borderRadius: 12,
     },
     menuIconContainer: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: theme.colors.primary[100],
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: theme.colors.primary[50],
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginRight: 16,
     },
-    dangerIconContainer: { backgroundColor: theme.colors.error[50] },
-    menuContent: { flex: 1 },
-    menuTitle: { fontSize: 16, fontWeight: '500', color: theme.colors.text.primary, marginBottom: 2 },
-    menuSubtitle: { fontSize: 13, color: theme.colors.text.secondary },
-    dangerText: { color: theme.colors.error[600] },
-    // OTP Modal
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-    otpModal: { backgroundColor: theme.colors.background.card, marginHorizontal: 24, borderRadius: 20, padding: 24, width: '90%', maxWidth: 400 },
-    otpHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-    otpTitle: { fontSize: 20, fontWeight: '700', color: theme.colors.text.primary },
-    closeButton: { padding: 4 },
-    otpLabel: { fontSize: 14, color: theme.colors.text.secondary, marginBottom: 12 },
-    otpInput: {
-        backgroundColor: theme.colors.background.tertiary,
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
+    dangerIconContainer: {
+        backgroundColor: theme.colors.error[50],
+    },
+    menuContent: {
+        flex: 1,
+    },
+    menuTitle: {
         fontSize: 16,
+        fontWeight: '600',
         color: theme.colors.text.primary,
-        borderWidth: 1,
-        borderColor: theme.colors.primary[100],
+        marginBottom: 2,
     },
-    otpButton: {
-        backgroundColor: theme.colors.primary[600],
-        borderRadius: 12,
-        paddingVertical: 14,
-        alignItems: 'center',
-        marginTop: 16,
+    menuSubtitle: {
+        fontSize: 12,
+        color: theme.colors.text.muted,
     },
-    otpButtonText: { fontSize: 16, fontWeight: '600', color: theme.colors.text.white },
-    resendLink: { alignItems: 'center', marginTop: 16 },
-    resendText: { fontSize: 14, color: theme.colors.primary[600], fontWeight: '500' },
-    qrImage: {
-        width: 200,
-        height: 200,
-        alignSelf: 'center',
-        marginVertical: 12,
+    dangerText: {
+        color: theme.colors.error[600],
+    },
+    divider: {
+        height: 1,
+        backgroundColor: theme.colors.border,
+        marginVertical: 8,
+        marginHorizontal: 16,
     },
 });

@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useAttendance } from '../../context/AttendanceContext';
+import { getProfileImageUrl } from '../../utils/api';
 import BottomNavBar from '../../components/common/BottomNavBar';
 import { COLORS } from '../../styles/colors';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
@@ -147,9 +148,9 @@ const SettingsScreen = ({ navigation }) => {
                     <View style={styles.profileSummary}>
                         <View style={styles.avatarContainer}>
                             <View style={styles.avatar}>
-                                {user?.profilePicture ? (
+                                {user?.profilePhoto ? (
                                     <Image
-                                        source={{ uri: user.profilePicture.includes('?') ? `${user.profilePicture}&t=${new Date().getTime()}` : `${user.profilePicture}?t=${new Date().getTime()}` }}
+                                        source={{ uri: getProfileImageUrl(user.profilePhoto) }}
                                         style={styles.avatarImage}
                                     />
                                 ) : (

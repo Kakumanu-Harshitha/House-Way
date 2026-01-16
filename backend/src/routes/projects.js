@@ -112,10 +112,10 @@ router.get('/', authenticate, async (req, res) => {
     sortConfig[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
     const projects = await Project.find(query)
-      .populate('client', 'firstName lastName email')
-      .populate('assignedEmployees', 'firstName lastName email')
-      .populate('assignedVendors', 'firstName lastName email vendorDetails.companyName')
-      .populate('createdBy', 'firstName lastName email')
+      .populate('client', 'firstName lastName email profileImage')
+      .populate('assignedEmployees', 'firstName lastName email profileImage')
+      .populate('assignedVendors', 'firstName lastName email vendorDetails.companyName profileImage')
+      .populate('createdBy', 'firstName lastName email profileImage')
       .sort(sortConfig)
       .limit(limit * 1)
       .skip((page - 1) * limit);

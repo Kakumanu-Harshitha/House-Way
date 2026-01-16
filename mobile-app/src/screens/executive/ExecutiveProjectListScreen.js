@@ -16,7 +16,7 @@ import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useAttendance } from '../../context/AttendanceContext';
 import WaveHeader from '../../components/clientManagement/WaveHeader';
-import { projectsAPI } from '../../utils/api';
+import { projectsAPI, getProfileImageUrl } from '../../utils/api';
 import ExecutiveBottomNavBar from '../../components/common/ExecutiveBottomNavBar';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -194,12 +194,10 @@ const ExecutiveProjectListScreen = ({ navigation, route }) => {
                         marginTop: 8
                     }}>
                         <View style={styles.clientRow}>
-                        {item.client.profileImage ? (
+                        {item.client.profilePhoto ? (
                             <Image 
                                 source={{ 
-                                    uri: item.client.profileImage.includes('?') 
-                                        ? `${item.client.profileImage}&t=${new Date().getTime()}` 
-                                        : `${item.client.profileImage}?t=${new Date().getTime()}` 
+                                    uri: getProfileImageUrl(item.client.profilePhoto)
                                 }} 
                                 style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }} 
                             />

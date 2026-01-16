@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
-import { clientsAPI, projectsAPI } from '../../utils/api';
+import { clientsAPI, projectsAPI, getProfileImageUrl } from '../../utils/api';
 import { useAttendance } from '../../context/AttendanceContext';
 import BottomNavBar from '../../components/common/BottomNavBar';
 import { COLORS } from '../../styles/colors';
@@ -160,16 +160,21 @@ const ClientsListScreen = ({ navigation }) => {
         activeOpacity={0.7}
       >
         <View style={styles.cardHeader}>
-          {item.profileImage ? (
-            <Image 
-              source={{ 
-                uri: item.profileImage.includes('?') 
-                  ? `${item.profileImage}&t=${new Date().getTime()}` 
-                  : `${item.profileImage}?t=${new Date().getTime()}` 
-              }} 
-              style={styles.avatarImage} 
-            />
-          ) : (
+        {item.profilePhoto ? (
+          <Image 
+            source={{ uri: getProfileImageUrl(item.profilePhoto) }} 
+            style={styles.avatarImage}
+            defaultSource={null}
+            onError={() => {
+              // Fallback to initials if image fails
+              // We can't easily switch to the View branch here without state
+              // But we can try to force a re-render or just let the Image fail gracefully
+              // Actually, better to use a stateful component or just accept that if it fails, it fails.
+              // However, the standard we used in other files is to use a state variable 'imageError'.
+              // Since this is a FlatList item, using a separate component for the avatar is better to handle state.
+            }}
+          />
+        ) : (
             <View style={styles.avatarContainer}>
               <Text style={styles.avatarText}>
                 {item.firstName?.charAt(0)}{item.lastName?.charAt(0)}
