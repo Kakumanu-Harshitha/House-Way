@@ -212,8 +212,12 @@ router.delete('/profile-photo', authenticate, async (req, res) => {
     }
 
     // Always clear profileImage field (idempotent)
-    user.profileImage = null;
-    await user.save();
+    // AND explicitly unset profilePhoto if it exists (legacy field)
+    // This ensures no old references remain
+    await User.findByIdAndUpdate(user._id, {
+      $set: { profileImage: null },
+      $unset: { profilePhoto: 1 }
+    });
 
     res.json({
       success: true,

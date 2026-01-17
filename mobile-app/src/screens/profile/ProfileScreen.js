@@ -353,7 +353,12 @@ const ProfileScreen = ({ navigation }) => {
 
         if (syncUser && user) {
           console.log('Syncing user with null profilePhoto');
-          await syncUser({ ...user, profilePhoto: null });
+          // STRICTLY clear both fields to avoid fallback to old image
+          await syncUser({ 
+            ...user, 
+            profilePhoto: null,
+            profileImage: null 
+          });
         }
         showAlert('Success', 'Profile photo removed successfully!');
       } else {
