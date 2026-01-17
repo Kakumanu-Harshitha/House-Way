@@ -18,6 +18,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { projectsAPI, filesAPI } from '../../../utils/api';
 import theme from '../../../styles/theme';
 import { StandardCard } from '../../../components/StandardCard';
+import UserAvatar from '../../../components/UserAvatar';
 // Removed problematic animation components and gradients
 // Removed animation imports to prevent CSS errors
 
@@ -496,19 +497,13 @@ const ProjectDetailsScreen = () => {
               project.assignedEmployees.map((member, index) => (
                 <StandardCard key={member._id || index} variant="secondary" style={styles.teamCard}>
                   <View style={styles.teamMemberRow}>
-                    <View style={styles.teamAvatar}>
-                      {member.profilePhoto ? (
-                        <Image
-                          source={{
-                            uri: getProfileImageUrl(member.profilePhoto)
-                          }}
-                          style={styles.teamAvatarImg}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <Text style={styles.teamAvatarText}>{member.firstName?.[0]}{member.lastName?.[0]}</Text>
-                      )}
-                    </View>
+                    <UserAvatar
+                      user={member}
+                      size={50}
+                      style={styles.teamAvatar}
+                      backgroundColor={theme.colors.primary[50]}
+                      textColor={theme.colors.primary[500]}
+                    />
                     <View style={styles.teamInfo}>
                       <Text style={styles.teamName}>{member.firstName} {member.lastName}</Text>
                       <Text style={styles.teamRole}>{member.employeeDetails?.position || 'Project Designer'}</Text>

@@ -2,30 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import theme from '../../../styles/theme';
-import { getProfileImageUrl } from '../../../utils/api';
+import UserAvatar from '../../../components/UserAvatar';
 
 export default function AppHeader({ title, onBack, onMenu, onNotifications, user, onProfile }) {
-  const [imageError, setImageError] = useState(false);
-
-  const renderProfileImage = () => {
-    if (user?.profilePhoto && !imageError) {
-      return (
-        <Image
-          source={{ uri: getProfileImageUrl(user.profilePhoto) }}
-          style={styles.profileImage}
-          resizeMode="cover"
-          onError={() => setImageError(true)}
-        />
-      );
-    }
-    return (
-      <View style={styles.avatarPlaceholder}>
-        <Text style={styles.avatarText}>
-          {user?.firstName?.[0] || user?.name?.[0] || 'U'}
-        </Text>
-      </View>
-    );
-  };
 
   return (
     <View style={styles.header}>
@@ -52,7 +31,12 @@ export default function AppHeader({ title, onBack, onMenu, onNotifications, user
         
         {user && (
           <TouchableOpacity onPress={onProfile || (() => {})} style={styles.profileButton}>
-            {renderProfileImage()}
+            <UserAvatar 
+                user={user}
+                size={32}
+                style={styles.profileImage}
+                showInitials={true}
+            />
           </TouchableOpacity>
         )}
 

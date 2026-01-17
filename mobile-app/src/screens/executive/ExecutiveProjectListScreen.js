@@ -10,15 +10,15 @@ import {
     Alert,
     Platform,
     TextInput,
-    Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useAttendance } from '../../context/AttendanceContext';
 import WaveHeader from '../../components/clientManagement/WaveHeader';
-import { projectsAPI, getProfileImageUrl } from '../../utils/api';
+import { projectsAPI } from '../../utils/api';
 import ExecutiveBottomNavBar from '../../components/common/ExecutiveBottomNavBar';
 import { useFocusEffect } from '@react-navigation/native';
+import UserAvatar from '../../components/UserAvatar';
 
 // Premium White Theme with Gold Accents
 const COLORS = {
@@ -148,91 +148,7 @@ const ExecutiveProjectListScreen = ({ navigation, route }) => {
     const activeCount = projects.filter(p => p.status === 'in-progress' || p.status === 'planning').length;
     const pastCount = projects.filter(p => p.status === 'completed' || p.status === 'on-hold' || p.status === 'cancelled').length;
 
-    const ProjectCard = ({ item }) => {
-        const [imageError, setImageError] = useState(false);
-
-        return (
-            <TouchableOpacity
-                style={styles.projectCard}
-                onPress={() => handleProjectPress(item)}
-                activeOpacity={0.8}
-            >
-                <View style={[styles.statusIndicator, { backgroundColor: getStatusColor(item.status) }]} />
-                <View style={styles.projectContent}>
-                    <View style={styles.projectHeader}>
-                        <Text style={styles.projectTitle} numberOfLines={1}>{item.title}</Text>
-                        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
-                            <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-                                {item.status?.replace('-', ' ')}
-                            </Text>
-                        </View>
-                    </View>
-
-                    <Text style={styles.projectDescription} numberOfLines={2}>
-                        {item.description || 'No description available'}
-                    </Text>
-
-                    <View style={styles.projectInfo}>
-                        <View style={styles.infoItem}>
-                            <Feather name="calendar" size={12} color={COLORS.textMuted} />
-                            <Text style={styles.infoText}>
-                                {new Date(item.createdAt).toLocaleDateString()}
-                            </Text>
-                        </View>
-                        {item.progress && (
-                            <View style={styles.infoItem}>
-                                <Text style={[styles.infoText, { color: COLORS.primary, fontWeight: '700' }]}>
-                                    {item.progress.percentage || 0}% Complete
-                                </Text>
-                            </View>
-                        )}
-                    </View>
-
-                    {/* Client Details Section */}
-                    {item.client && (
-                        <View style={{
-                            backgroundColor: COLORS.primaryLight,
-                            padding: 10,
-                            borderRadius: 8,
-                            marginTop: 8
-                        }}>
-                            <View style={styles.clientRow}>
-                            {item.client.profilePhoto && !imageError ? (
-                                <Image 
-                                    source={{ 
-                                        uri: getProfileImageUrl(item.client.profilePhoto)
-                                    }} 
-                                    style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }} 
-                                    onError={() => setImageError(true)}
-                                />
-                            ) : (
-                                <Feather name="user" size={14} color={COLORS.primary} style={{ marginRight: 8 }} />
-                            )}
-                            <Text style={[styles.clientName, { color: COLORS.text, fontWeight: '600' }]}>
-                                {item.client.firstName} {item.client.lastName}
-                            </Text>
-                        </View>
-                            {item.client.phone && (
-                                <View style={[styles.clientRow, { marginTop: 4 }]}>
-                                    <Feather name="phone" size={12} color={COLORS.textMuted} />
-                                    <Text style={styles.clientName}>{item.client.phone}</Text>
-                                </View>
-                            )}
-                            {item.client.email && (
-                                <View style={[styles.clientRow, { marginTop: 4 }]}>
-                                    <Feather name="mail" size={12} color={COLORS.textMuted} />
-                                    <Text style={styles.clientName} numberOfLines={1}>{item.client.email}</Text>
-                                </View>
-                            )}
-                        </View>
-                    )}
-                </View>
-                <Feather name="chevron-right" size={20} color={COLORS.primary} />
-            </TouchableOpacity>
-        );
-    };
-
-    const renderProjectCard = ({ item }) => <ProjectCard item={item} />;
+    const renderProjectCard = ({ item }) => <ProjectCard item={item} onPress={handleProjectPress} />;
 
     if (loading && projects.length === 0) {
         return (
@@ -327,6 +243,95 @@ const ExecutiveProjectListScreen = ({ navigation, route }) => {
 
             <ExecutiveBottomNavBar navigation={navigation} activeTab="projects" />
         </View>
+    );
+};
+
+const ProjectCard = ({ item, onPress }) => {
+    const getStatusColor = (status) => {
+        const colors = {
+            planning: COLORS.warning,
+            'in-progress': COLORS.primary,
+            'on-hold': COLORS.textMuted,
+            completed: COLORS.success,
+            cancelled: COLORS.danger,
+        };
+        return colors[status] || COLORS.textMuted;
+    };
+
+    return (
+        <TouchableOpacity 
+            style={styles.projectCard}
+            onPress={() => onPress(item)}
+            activeOpacity={0.8}
+        >
+            <View style={[styles.statusIndicator, { backgroundColor: getStatusColor(item.status) }]} />
+            <View style={styles.projectContent}>
+                <View style={styles.projectHeader}>
+                    <Text style={styles.projectTitle} numberOfLines={1}>{item.title}</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
+                        <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+                            {item.status?.replace('-', ' ')}
+                        </Text>
+                    </View>
+                </View>
+
+                <Text style={styles.projectDescription} numberOfLines={2}>
+                    {item.description || 'No description available'}
+                </Text>
+
+                <View style={styles.projectInfo}>
+                    <View style={styles.infoItem}>
+                        <Feather name="calendar" size={12} color={COLORS.textMuted} />
+                        <Text style={styles.infoText}>
+                            {new Date(item.createdAt).toLocaleDateString()}
+                        </Text>
+                    </View>
+                    {item.progress && (
+                        <View style={styles.infoItem}>
+                            <Text style={[styles.infoText, { color: COLORS.primary, fontWeight: '700' }]}>
+                                {item.progress.percentage || 0}% Complete
+                            </Text>
+                        </View>
+                    )}
+                </View>
+
+                {/* Client Details Section */}
+                {item.client && (
+                    <View style={{
+                        backgroundColor: COLORS.primaryLight,
+                        padding: 10,
+                        borderRadius: 8,
+                        marginTop: 8
+                    }}>
+                        <View style={styles.clientRow}>
+                            <UserAvatar
+                                user={item.client}
+                                size={24}
+                                style={{ marginRight: 8 }}
+                                backgroundColor={COLORS.primaryLight}
+                                textColor={COLORS.primary}
+                            />
+                            <Text style={[styles.clientName, { color: COLORS.text, fontWeight: '600' }]}>
+                                {item.client.firstName} {item.client.lastName}
+                            </Text>
+                        </View>
+                        {item.client.phone && (
+                            <View style={[styles.clientRow, { marginTop: 4 }]}>
+                                <Feather name="phone" size={12} color={COLORS.textMuted} />
+                                <Text style={styles.clientName}>{item.client.phone}</Text>
+                            </View>
+                        )}
+                        {item.client.email && (
+                            <View style={[styles.clientRow, { marginTop: 4 }]}>
+                                <Feather name="mail" size={12} color={COLORS.textMuted} />
+                                <Text style={styles.clientName} numberOfLines={1}>{item.client.email}</Text>
+                            </View>
+                        )}
+                    </View>
+                )}
+            </View>
+            <Feather name="chevron-right" size={20} color={COLORS.primary} />
+        </TouchableOpacity>
     );
 };
 

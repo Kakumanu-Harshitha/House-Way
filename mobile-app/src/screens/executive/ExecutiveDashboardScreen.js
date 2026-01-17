@@ -14,7 +14,8 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useAttendance } from '../../context/AttendanceContext';
-import { projectsAPI, getProfileImageUrl } from '../../utils/api';
+import { projectsAPI } from '../../utils/api';
+import UserAvatar from '../../components/UserAvatar';
 import ExecutiveBottomNavBar from '../../components/common/ExecutiveBottomNavBar';
 import CommonHeader from '../../components/CommonHeader';
 import theme from '../../styles/theme';
@@ -137,13 +138,6 @@ const ExecutiveDashboardScreen = ({ navigation }) => {
         return colors[status] || theme.colors.text.secondary;
     };
 
-    const getInitials = () => {
-        if (!user) return 'E';
-        const first = user.firstName?.[0] || '';
-        const last = user.lastName?.[0] || '';
-        return `${first}${last}`.toUpperCase() || 'E';
-    };
-
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
@@ -152,12 +146,6 @@ const ExecutiveDashboardScreen = ({ navigation }) => {
             </View>
         );
     }
-
-    const [imageErrors, setImageErrors] = useState({});
-
-    const handleImageError = (id) => {
-        setImageErrors(prev => ({ ...prev, [id]: true }));
-    };
 
     return (
         <View style={styles.container}>
@@ -266,21 +254,12 @@ const ExecutiveDashboardScreen = ({ navigation }) => {
                                     <Text style={styles.projectStatus}>{project.status?.replace('-', ' ')}</Text>
                                     {project.client && (
                                         <View style={styles.clientInfo}>
-                                            {project.client.profilePhoto && !imageErrors[project.client._id] ? (
-                                                <Image 
-                                                    source={{ 
-                                                        uri: getProfileImageUrl(project.client.profilePhoto)
-                                                    }} 
-                                                    style={styles.clientAvatar} 
-                                                    onError={() => handleImageError(project.client._id)}
-                                                />
-                                            ) : (
-                                                <View style={styles.clientAvatarPlaceholder}>
-                                                    <Text style={styles.clientInitials}>
-                                                        {project.client.firstName?.[0]}{project.client.lastName?.[0]}
-                                                    </Text>
-                                                </View>
-                                            )}
+                                            <UserAvatar
+                                                user={project.client}
+                                                size={20}
+                                                style={{ marginRight: 6 }}
+                                                backgroundColor={theme.colors.background.secondary}
+                                            />
                                             <Text style={styles.clientName}>
                                                 {project.client.firstName} {project.client.lastName}
                                             </Text>
@@ -435,27 +414,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginTop: 6,
-    },
-    clientAvatar: {
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        marginRight: 6,
-        backgroundColor: theme.colors.background.secondary,
-    },
-    clientAvatarPlaceholder: {
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        marginRight: 6,
-        backgroundColor: theme.colors.primary[100],
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    clientInitials: {
-        fontSize: 8,
-        fontWeight: 'bold',
-        color: theme.colors.primary[700],
     },
     clientName: {
         fontSize: 12,

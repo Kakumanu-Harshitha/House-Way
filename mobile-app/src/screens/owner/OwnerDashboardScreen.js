@@ -13,13 +13,11 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-  Image
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../services/api';
 import { ordersAPI } from '../../services/ordersAPI';
-import { getProfileImageUrl } from '../../utils/api';
 import CommonHeader from '../../components/CommonHeader';
 
 const { width } = Dimensions.get('window');
@@ -41,7 +39,6 @@ const OwnerDashboardScreen = ({ navigation }) => {
   const [teamStats, setTeamStats] = useState({});
   const [recentActivity, setRecentActivity] = useState([]);
   const [stats, setStats] = useState({ onTrack: 0, atRisk: 0, delayed: 0 });
-  const [imageErrors, setImageErrors] = useState({});
 
   // Modal States
   const [addUserVisible, setAddUserVisible] = useState(false);
@@ -1122,25 +1119,13 @@ const OwnerDashboardScreen = ({ navigation }) => {
             style={styles.clientCard}
             onPress={() => navigation.navigate('Clients', { clientId: client._id })}
           >
-            {client.profilePhoto && !imageErrors[client._id] ? (
-                <Image
-                    source={{ uri: getProfileImageUrl(client.profilePhoto) }}
-                    style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 22,
-                        marginRight: 12,
-                        backgroundColor: '#f0f0f0'
-                    }}
-                    onError={() => setImageErrors(prev => ({ ...prev, [client._id]: true }))}
-                />
-            ) : (
-                <View style={styles.clientAvatar}>
-                    <Text style={styles.clientAvatarText}>
-                        {(client.firstName?.[0] || 'C').toUpperCase()}
-                    </Text>
-                </View>
-            )}
+            <UserAvatar 
+                user={client} 
+                size={44} 
+                style={{ marginRight: 12 }} 
+                backgroundColor="#f0f0f0"
+                textColor="#555"
+            />
             <View style={styles.clientInfo}>
               <Text style={styles.clientName}>
                 {client.firstName} {client.lastName}

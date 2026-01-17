@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
-import { dashboardAPI, getProfileImageUrl } from '../../utils/api';
+import { dashboardAPI } from '../../utils/api';
 import { useAttendance } from '../../context/AttendanceContext';
 import BottomNavBar from '../../components/common/BottomNavBar';
 import { COLORS } from '../../styles/colors';
@@ -29,8 +29,6 @@ const HomeDashboardScreen = ({ navigation }) => {
     quotations: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
-
-  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     // Protection: If employee is not checked in, redirect to Check-In screen
@@ -135,14 +133,11 @@ const HomeDashboardScreen = ({ navigation }) => {
             onPress={() => navigation.navigate('SettingsScreen')}
             accessibilityLabel="Open Settings"
           >
-            {user?.profilePhoto ? (
-              <Image
-                source={{ uri: getProfileImageUrl(user.profilePhoto) }}
-                style={{ width: 32, height: 32, borderRadius: 16 }}
-              />
-            ) : (
-              <Feather name="user" size={20} color={COLORS.primary} />
-            )}
+            <UserAvatar 
+                user={user} 
+                size={32}
+                showInitials={true}
+            />
           </TouchableOpacity>
         </View>
 

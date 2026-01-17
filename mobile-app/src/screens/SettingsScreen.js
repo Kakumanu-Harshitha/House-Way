@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, 
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
-import { getProfileImageUrl } from '../utils/api';
 import CommonHeader from '../components/CommonHeader';
+import UserAvatar from '../components/UserAvatar';
 
 // Colors for settings screen - Clean white with gold accents
 const COLORS = {
@@ -96,19 +96,13 @@ export default function SettingsScreen() {
         {/* User Info Card */}
         <View style={styles.userCard}>
           <View style={styles.avatarContainer}>
-            {user?.profilePhoto && !imageError ? (
-              <Image
-                source={{ uri: getProfileImageUrl(user.profilePhoto) }}
-                style={styles.avatar}
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {user?.firstName?.[0]}{user?.lastName?.[0]}
-                </Text>
-              </View>
-            )}
+            <UserAvatar 
+              user={user} 
+              size={64} 
+              style={styles.avatar} 
+              backgroundColor="#D4AF37"
+              textColor="#FFFFFF"
+            />
           </View>
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{user?.firstName} {user?.lastName}</Text>

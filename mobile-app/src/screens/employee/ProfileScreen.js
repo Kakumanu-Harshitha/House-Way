@@ -19,8 +19,9 @@ import {
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../context/AuthContext';
-import { usersAPI, getProfileImageUrl } from '../../utils/api';
+import { usersAPI } from '../../utils/api';
 import BottomNavBar from '../../components/common/BottomNavBar';
+import UserAvatar from '../../components/UserAvatar';
 import { COLORS } from '../../styles/colors';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
 
@@ -113,7 +114,7 @@ const ProfileScreen = ({ navigation, route }) => {
             if (response.success) {
                 const userData = response.data.user;
 
-                setProfilePhoto(userData.profilePhoto || null);
+                setProfilePhoto(userData.profilePhoto || userData.profileImage || null);
                 setFormData(prev => ({
                     ...prev,
                     firstName: userData.firstName || '',
@@ -143,7 +144,7 @@ const ProfileScreen = ({ navigation, route }) => {
                 email: user.email || '',
                 phone: user.phone || '',
             });
-            setProfilePhoto(user.profilePhoto || null);
+            setProfilePhoto(user.profilePhoto || user.profileImage || null);
         }
     }, [user]);
 
@@ -500,17 +501,14 @@ const ProfileScreen = ({ navigation, route }) => {
                     <View style={styles.profileCard}>
                         <View style={styles.avatarContainer}>
                             <TouchableOpacity onPress={handleImagePicker}>
-                                {profilePhoto ? (
-                                    <Image 
-                                        source={{ uri: getProfileImageUrl(profilePhoto) }} 
-                                        style={styles.avatar}
-                                        onError={() => setProfilePhoto(null)}
-                                    />
-                                ) : (
-                                    <View style={styles.avatarPlaceholder}>
-                                        <Feather name="user" size={40} color={COLORS.primary} />
-                                    </View>
-                                )}
+                                <UserAvatar 
+                                    user={{ ...user, profilePhoto: profilePhoto }} 
+                                    size={100} 
+                                    style={styles.avatar} 
+                                    backgroundColor="#FFF9E6"
+                                    textColor={COLORS.primary}
+                                    showInitials={true}
+                                />
                                 <View style={styles.editBadge}>
                                     <Feather name="camera" size={14} color={COLORS.white} />
                                 </View>

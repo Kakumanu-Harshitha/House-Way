@@ -10,12 +10,12 @@ import {
   StatusBar,
   TextInput,
   ActivityIndicator,
-  Image
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../services/api';
 import AdminNavbar from '../../components/AdminNavbar';
+import UserAvatar from '../../components/UserAvatar';
 
 const ActiveProjectsListScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
@@ -111,7 +111,6 @@ const ActiveProjectsListScreen = ({ navigation }) => {
   };
 
   const ProjectCard = ({ project }) => {
-    const [imageError, setImageError] = useState(false);
     const statusConfig = getStatusConfig(project.status, project.priority);
     const progress = calculateProgress(project);
     const clientName = getClientDisplayName(project.client) || 'N/A';
@@ -136,15 +135,11 @@ const ActiveProjectsListScreen = ({ navigation }) => {
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-            {project.client?.profilePhoto && !imageError ? (
-                <Image
-                    source={{ uri: getProfileImageUrl(project.client.profilePhoto) }}
-                    style={{ width: 20, height: 20, borderRadius: 10, marginRight: 8 }}
-                    onError={() => setImageError(true)}
-                />
-            ) : (
-                <Feather name="user" size={16} color="#666" style={{ marginRight: 8 }} />
-            )}
+            <UserAvatar 
+                user={project.client} 
+                size={20} 
+                style={{ marginRight: 8 }} 
+            />
             <Text style={styles.clientText}>Client: {clientName}</Text>
         </View>
         

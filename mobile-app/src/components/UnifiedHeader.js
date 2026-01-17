@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import theme from '../styles/theme';
-import { getProfileImageUrl } from '../utils/api';
+import UserAvatar from './UserAvatar';
 
 /**
  * UnifiedHeader - Professional header component for all user types
@@ -76,16 +76,17 @@ export default function UnifiedHeader({
         <View style={styles.rightSection}>
           {(onLogout || user) && (
             <TouchableOpacity onPress={onLogout} style={styles.avatarButton}>
-              {user && user.profilePhoto ? (
-                <Image 
-                  source={{ uri: getProfileImageUrl(user.profilePhoto) }} 
-                  style={styles.avatarImage} 
-                />
-              ) : (
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{displayInitials}</Text>
-                </View>
-              )}
+              <UserAvatar 
+                user={user}
+                initials={displayInitials}
+                size={36}
+                backgroundColor="rgba(255, 255, 255, 0.2)"
+                textColor={theme.colors.text.white}
+                style={{ 
+                  borderWidth: 1, 
+                  borderColor: 'rgba(255, 255, 255, 0.3)' 
+                }}
+              />
             </TouchableOpacity>
           )}
         </View>

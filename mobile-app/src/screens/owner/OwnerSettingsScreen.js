@@ -14,14 +14,13 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
-  Image,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+import UserAvatar from '../../components/UserAvatar';
 
 const OwnerSettingsScreen = ({ navigation }) => {
   const { user } = useAuth();
-  const [imageError, setImageError] = useState(false);
   const [settings, setSettings] = useState({
     darkMode: false,
     compactView: false,
@@ -99,19 +98,12 @@ const OwnerSettingsScreen = ({ navigation }) => {
         {/* Profile Section */}
         <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
-            {user?.profilePhoto && !imageError ? (
-              <Image
-                source={{ uri: getProfileImageUrl(user.profilePhoto) }}
-                style={styles.avatar}
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <Text style={styles.avatarText}>
-                  {user?.firstName?.[0] || 'O'}{user?.lastName?.[0] || ''}
-                </Text>
-              </View>
-            )}
+            <UserAvatar 
+              user={user} 
+              size={80} 
+              style={styles.avatar} 
+              showInitials={true}
+            />
             <TouchableOpacity 
               style={styles.editAvatarButton}
               onPress={() => navigation.navigate('Overview', { screen: 'ProfileScreen' })}

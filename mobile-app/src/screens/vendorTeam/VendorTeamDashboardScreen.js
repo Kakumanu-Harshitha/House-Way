@@ -117,21 +117,12 @@ const VendorTeamDashboardScreen = ({ navigation }) => {
                     
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <TouchableOpacity onPress={() => navigation.navigate('VendorTeamProfile')}>
-                            {user?.profilePhoto && !imageError ? (
-                                <Image 
-                                    source={{ 
-                                        uri: getProfileImageUrl(user.profilePhoto)
-                                    }} 
-                                    style={styles.headerAvatar} 
-                                    onError={() => setImageError(true)}
-                                />
-                            ) : (
-                                <View style={styles.headerAvatarPlaceholder}>
-                                    <Text style={styles.headerAvatarText}>
-                                        {user?.firstName?.[0] || 'V'}
-                                    </Text>
-                                </View>
-                            )}
+                            <UserAvatar
+                                user={user}
+                                size={40}
+                                style={styles.headerAvatar}
+                                showInitials={true}
+                            />
                         </TouchableOpacity>
 
                         <TouchableOpacity

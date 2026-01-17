@@ -18,7 +18,8 @@ import {
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../context/AuthContext';
-import { authAPI, usersAPI, getProfileImageUrl } from '../../utils/api';
+import { authAPI, usersAPI } from '../../utils/api';
+import UserAvatar from '../../components/UserAvatar';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
 
 const OwnerProfileScreen = ({ navigation }) => {
@@ -43,7 +44,7 @@ const OwnerProfileScreen = ({ navigation }) => {
       if (response.success) {
         const userData = response.data.user;
         
-        setProfilePhoto(userData.profilePhoto || null);
+        setProfilePhoto(userData.profilePhoto || userData.profileImage || null);
         setFormData({
           firstName: userData.firstName || '',
           lastName: userData.lastName || '',
@@ -341,12 +342,6 @@ const OwnerProfileScreen = ({ navigation }) => {
     }
   };
 
-  const getInitials = () => {
-    const first = formData.firstName?.[0] || '';
-    const last = formData.lastName?.[0] || '';
-    return `${first}${last}`.toUpperCase() || 'A';
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -372,17 +367,12 @@ const OwnerProfileScreen = ({ navigation }) => {
         {/* Profile Card */}
         <View style={styles.profileCard}>
           <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              {profilePhoto ? (
-                <Image
-                  source={{ uri: getProfileImageUrl(profilePhoto) }}
-                  style={styles.avatarImage}
-                  onError={() => setProfilePhoto(null)}
-                />
-              ) : (
-                <Text style={styles.avatarText}>{getInitials()}</Text>
-              )}
-            </View>
+            <UserAvatar 
+              user={{ ...user, profilePhoto: profilePhoto }}
+              size={100}
+              backgroundColor='#FFC107'
+              textColor='#FFFFFF'
+            />
             <TouchableOpacity style={styles.cameraButton} onPress={handleImagePicker}>
               <Ionicons name="camera" size={16} color="#FFFFFF" />
             </TouchableOpacity>

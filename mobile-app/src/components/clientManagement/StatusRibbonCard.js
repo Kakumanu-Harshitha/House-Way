@@ -4,11 +4,11 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Image,
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
+import UserAvatar from '../UserAvatar';
 
 const { width } = Dimensions.get('window');
 
@@ -55,18 +55,12 @@ const StatusRibbonCard = ({
         {/* Avatar Section */}
         <View style={styles.avatarContainer}>
           <View style={styles.avatarWrapper}>
-            {avatar ? (
-              <Image 
-                source={{ 
-                  uri: getProfileImageUrl(avatar)
-                }} 
-                style={styles.avatar} 
-              />
-            ) : (
-              <View style={styles.defaultAvatar}>
-                <Feather name="user" size={28} color="#7487C1" />
-              </View>
-            )}
+            <UserAvatar
+                user={{ profilePhoto: avatar, name: title }}
+                size={60}
+                style={styles.avatar}
+                showInitials={true}
+            />
             <View style={styles.avatarGlow} />
           </View>
         </View>
@@ -188,6 +182,8 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
+    borderWidth: 2,
+    borderColor: '#E8EEF4',
   },
   defaultAvatar: {
     width: 60,

@@ -15,17 +15,16 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import WaveHeader from '../../components/clientManagement/WaveHeader';
-import { projectsAPI, getProfileImageUrl } from '../../utils/api';
+import { projectsAPI } from '../../utils/api';
 import { useAttendance } from '../../context/AttendanceContext';
 import BottomNavBar from '../../components/common/BottomNavBar';
 import { useFocusEffect } from '@react-navigation/native';
+import UserAvatar from '../../components/UserAvatar';
 import { COLORS } from '../../styles/colors';
 
 const { width } = Dimensions.get('window');
 
 const ProjectCard = ({ item, onPress }) => {
-  const [imageError, setImageError] = useState(false);
-
   const getStatusColor = (status) => {
     const colors = {
       planning: COLORS.warning,
@@ -77,15 +76,13 @@ const ProjectCard = ({ item, onPress }) => {
 
         {item.client && (
           <View style={styles.clientRow}>
-             {item.client.profilePhoto && !imageError ? (
-                <Image 
-                  source={{ uri: getProfileImageUrl(item.client.profilePhoto) }} 
-                  style={{ width: 16, height: 16, borderRadius: 8 }}
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <Feather name="user" size={12} color={COLORS.textMuted} />
-              )}
+             <UserAvatar
+                user={item.client}
+                size={16}
+                style={{ marginRight: 4 }}
+                backgroundColor={COLORS.secondaryLight}
+                textColor={COLORS.primary}
+             />
             <Text style={styles.clientName}>
               {item.client.firstName} {item.client.lastName}
             </Text>

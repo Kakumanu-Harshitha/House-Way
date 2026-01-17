@@ -24,8 +24,11 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { getProfileImageUrl } from '../../utils/api';
+import UserAvatar from '../../components/UserAvatar';
 import AdminNavbar from '../../components/AdminNavbar';
+import { usersAPI, attendanceAPI, projectsAPI } from '../../utils/api';
+
+const showAlert = (title, message) => Alert.alert(title, message);
 
 const { width } = Dimensions.get('window');
 // Calculate day size to fit 7 columns with proper margins
@@ -238,22 +241,14 @@ const DayDetailsModal = ({ visible, date, dayData, employees, onClose }) => {
                         {employeeAttendance.map(({ employee, record }) => (
                             <View key={employee._id} style={styles.attendanceRow}>
                                 <View style={styles.employeeInfo}>
-                                    {employee.profilePhoto && !imageErrors[employee._id] ? (
-                                        <Image
-                                            source={{ uri: getProfileImageUrl(employee.profilePhoto) }}
-                                            style={[styles.avatarSmall, { backgroundColor: 'transparent' }]}
-                                            onError={() => handleImageError(employee._id)}
-                                        />
-                                    ) : (
-                                        <View style={[
-                                            styles.avatarSmall,
-                                            { backgroundColor: record ? '#10B981' : '#EF4444' }
-                                        ]}>
-                                            <Text style={styles.avatarText}>
-                                                {employee.firstName?.[0]?.toUpperCase() || 'E'}
-                                            </Text>
-                                        </View>
-                                    )}
+                                    <UserAvatar 
+                                        user={employee} 
+                                        size={40} 
+                                        style={styles.avatarSmall} 
+                                        backgroundColor={record ? '#10B981' : '#EF4444'}
+                                        textColor="#FFFFFF"
+                                        showInitials={true}
+                                    />
                                     <View>
                                         <Text style={styles.employeeName}>
                                             {employee.firstName} {employee.lastName}
@@ -289,7 +284,6 @@ const DayDetailsModal = ({ visible, date, dayData, employees, onClose }) => {
 
 // Employee Search Results Modal - Shows full employee details and attendance
 const EmployeeAttendanceModal = ({ visible, employee, attendanceRecords, projects, onClose }) => {
-    const [imageError, setImageError] = useState(false);
 
     if (!visible || !employee) return null;
     
@@ -352,17 +346,12 @@ const EmployeeAttendanceModal = ({ visible, employee, attendanceRecords, project
                 <View style={styles.modalContent}>
                     <View style={styles.modalHeader}>
                         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-                            {employee.profilePhoto && !imageError ? (
-                                <Image
-                                    source={{ uri: getProfileImageUrl(employee.profilePhoto) }}
-                                    style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12, backgroundColor: '#f0f0f0' }}
-                                    onError={() => setImageError(true)}
-                                />
-                            ) : (
-                                <View style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12, backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' }}>
-                                    <Text style={{ fontSize: 20 }}>👤</Text>
-                                </View>
-                            )}
+                            <UserAvatar 
+                                user={employee}
+                                size={48}
+                                style={{ marginRight: 12 }}
+                                showInitials={true}
+                            />
                             <View>
                                 <Text style={styles.modalTitle}>
                                     {employee.firstName} {employee.lastName}
@@ -567,33 +556,43 @@ const OwnerEmployeesScreen = ({ navigation }) => {
         avgAttendance: 0,
     });
     
-    const [imageErrors, setImageErrors] = useState({});
-
-    const handleImageError = (id) => {
-        setImageErrors(prev => ({ ...prev, [id]: true }));
-    };
-
     const fetchData = async () => {
         try {
             console.log('[OwnerEmployees] Fetching data...');
             
             // Fetch employees, attendance, and projects in parallel
-            const [employeesData, attendanceData, projectsData] = await Promise.all([
-                api.getUsers('employee').catch(() => []),
-                api.getAllAttendance().catch(() => []),
-                api.getProjects().catch(() => ({ projects: [] })),
+            const [employeesRes, attendanceRes, projectsRes] = await Promise.all([
+                usersAPI.getUsers({ role: 'employee' }).catch(err => {
+                    console.log('Error fetching users:', err);
+                    return { data: { users: [] } };
+                }),
+                attendanceAPI.getAllAttendance().catch(err => {
+                    console.log('Error fetching attendance:', err);
+                    return { data: { attendanceRecords: [] } };
+                }),
+                projectsAPI.getProjects().catch(err => {
+                    console.log('Error fetching projects:', err);
+                    return { data: { projects: [] } };
+                }),
             ]);
             
-            console.log('[OwnerEmployees] Employees:', employeesData?.length || 0);
-            console.log('[OwnerEmployees] Projects:', projectsData?.projects?.length || 0);
+            // Extract arrays from response - handling both success structure and potential fallbacks
+            // API structure: { success: true, data: { users: [...] } }
+            const employeesList = employeesRes?.data?.users || employeesRes?.users || [];
+            const attendanceList = attendanceRes?.data?.attendanceRecords || attendanceRes?.attendanceRecords || [];
+            const projectsList = projectsRes?.data?.projects || projectsRes?.projects || [];
             
-            setEmployees(employeesData || []);
-            setProjects(projectsData?.projects || projectsData || []);
-            setAllAttendance(attendanceData || []);
+            console.log('[OwnerEmployees] Employees:', employeesList.length || 0);
+            console.log('[OwnerEmployees] Attendance:', attendanceList.length || 0);
+            console.log('[OwnerEmployees] Projects:', projectsList.length || 0);
+            
+            setEmployees(employeesList);
+            setProjects(projectsList);
+            setAllAttendance(attendanceList);
             
             // Process attendance by date
             const byDate = {};
-            (attendanceData || []).forEach(record => {
+            attendanceList.forEach(record => {
                 const dateStr = toLocalDateKey(record.date);
                 if (!dateStr) return;
                 if (!byDate[dateStr]) {
@@ -615,10 +614,10 @@ const OwnerEmployeesScreen = ({ navigation }) => {
             
             setStats({
                 presentToday: todayData?.presentCount || 0,
-                totalEmployees: employeesData?.length || 0,
+                totalEmployees: employeesList.length || 0,
                 avgAttendance: Object.keys(byDate).length > 0 
                     ? Math.round(Object.values(byDate).reduce((sum, d) => 
-                        sum + (d.presentCount / (employeesData?.length || 1)) * 100, 0
+                        sum + (d.presentCount / (employeesList.length || 1)) * 100, 0
                       ) / Object.keys(byDate).length)
                     : 0,
             });
@@ -755,22 +754,12 @@ const OwnerEmployeesScreen = ({ navigation }) => {
                                 style={styles.employeeCard}
                                 onPress={() => handleEmployeeSelect(emp)}
                             >
-                                {emp.profilePhoto && !imageErrors[emp._id] ? (
-                                    <Image
-                                        source={{ uri: getProfileImageUrl(emp.profilePhoto) }}
-                                        style={[styles.avatar, { backgroundColor: 'transparent' }]}
-                                        onError={() => handleImageError(emp._id)}
-                                    />
-                                ) : (
-                                    <View style={[
-                                        styles.avatar,
-                                        { backgroundColor: isPresent ? '#10B981' : '#9CA3AF' }
-                                    ]}>
-                                        <Text style={styles.avatarLetter}>
-                                            {emp.firstName?.[0]?.toUpperCase() || 'E'}
-                                        </Text>
-                                    </View>
-                                )}
+                                <UserAvatar
+                                    user={emp}
+                                    size={50}
+                                    style={styles.avatar}
+                                    backgroundColor={isPresent ? '#10B981' : '#9CA3AF'}
+                                />
                                 <View style={styles.employeeDetails}>
                                     <Text style={styles.employeeNameLarge}>
                                         {emp.firstName} {emp.lastName}

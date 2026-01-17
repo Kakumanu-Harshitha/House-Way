@@ -15,7 +15,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import theme from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
 import { ordersAPI } from '../services/ordersAPI';
-import { getProfileImageUrl } from '../utils/api';
+import UserAvatar from './UserAvatar';
 
 // Utility: pick black or white depending on background brightness
 const getContrastColor = (hexColor) => {
@@ -50,8 +50,6 @@ const AdminNavbar = ({
 }) => {
   const { user, logout } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
-  const [menuImageError, setMenuImageError] = useState(false);
-  const [navImageError, setNavImageError] = useState(false);
   const slideAnim = useState(new Animated.Value(0))[0];
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -127,14 +125,6 @@ const AdminNavbar = ({
     }).start();
   };
 
-  const getInitials = () => {
-    if (!user) return 'A';
-    const first = user.firstName?.[0] || '';
-    const last = user.lastName?.[0] || '';
-    const result = `${first}${last}`.trim();
-    return result ? result.toUpperCase() : 'A';
-  };
-
   const getStatusBarHeight = () => {
     return Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0; // [web:45][web:63]
   };
@@ -198,31 +188,19 @@ const AdminNavbar = ({
                 style={[
                   styles.avatar,
                   {
-                    backgroundColor:
-                      user?.profilePhoto && !navImageError ? 'transparent' : (effectiveTextColor === '#ffffff'
-                        ? 'rgba(255,255,255,0.3)'
-                        : 'rgba(0,0,0,0.1)'),
-                    overflow: 'hidden'
-                  },
+                    borderColor: effectiveTextColor,
+                    borderWidth: 1,
+                    backgroundColor: 'transparent',
+                    overflow: 'visible' // Allow badge to show if outside, but usually inside
+                  }
                 ]}
               >
-                {user?.profilePhoto && !navImageError ? (
-                  <Image
-                    source={{ 
-                      uri: getProfileImageUrl(user.profilePhoto)
-                    }}
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 16,
-                    }}
-                    onError={() => setNavImageError(true)}
-                  />
-                ) : (
-                  <Text style={[styles.avatarText, { color: effectiveTextColor }]}>
-                    {getInitials()}
-                  </Text>
-                )}
+                <UserAvatar
+                    user={user}
+                    size={30}
+                    backgroundColor={effectiveTextColor === '#ffffff' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.1)'}
+                    textColor={effectiveTextColor}
+                />
                 {unreadCount > 0 && (
                   <View style={styles.unreadBadge}>
                     <Text style={styles.unreadText} numberOfLines={1}>
@@ -287,29 +265,13 @@ const AdminNavbar = ({
           >
             {/* Menu Header */}
             <View style={styles.menuHeader}>
-              {user?.profilePhoto && !menuImageError ? (
-                <Image
-                  source={{ 
-                    uri: getProfileImageUrl(user.profilePhoto) 
-                  }}
-                  style={{
-                    width: 50,
-                    height: 50,
-                    borderRadius: 25,
-                    marginRight: 12
-                  }}
-                  onError={() => setMenuImageError(true)}
-                />
-              ) : (
-                <View
-                  style={[
-                    styles.menuAvatar,
-                    { backgroundColor: backgroundColor },
-                  ]}
-                >
-                  <Text style={styles.menuAvatarText}>{getInitials()}</Text>
-                </View>
-              )}
+              <UserAvatar
+                  user={user}
+                  size={50}
+                  style={{ marginRight: 12 }}
+                  backgroundColor={backgroundColor}
+                  textColor="#ffffff"
+              />
               <View style={{ flex: 1 }}>
                 <Text style={styles.menuUserName}>
                   {user?.firstName} {user?.lastName}

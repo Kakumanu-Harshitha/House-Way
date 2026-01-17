@@ -3,8 +3,9 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, A
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import theme from '../../../styles/theme';
-import { purchaseOrdersAPI, getProfileImageUrl } from '../../../utils/api';
+import { purchaseOrdersAPI } from '../../../utils/api';
 import { useAuth } from '../../../context/AuthContext';
+import UserAvatar from '../../../components/UserAvatar';
 
 export default function NegotiationChat({ route, navigation }) {
   // Support both old (quotationId) and new (orderId) navigation params
@@ -21,7 +22,6 @@ export default function NegotiationChat({ route, navigation }) {
   const [quotationNote, setQuotationNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [sending, setSending] = useState(false);
-  const [imageError, setImageError] = useState(false);
   const flatListRef = useRef(null);
   
   // Determine current user role
@@ -190,26 +190,6 @@ export default function NegotiationChat({ route, navigation }) {
     );
   }
 
-  const renderProfileImage = () => {
-    if (user?.profilePhoto && !imageError) {
-      return (
-        <Image
-          source={{ uri: getProfileImageUrl(user.profilePhoto) }}
-          style={styles.profileImage}
-          resizeMode="cover"
-          onError={() => setImageError(true)}
-        />
-      );
-    }
-    return (
-      <View style={styles.avatarPlaceholder}>
-        <Text style={styles.avatarText}>
-          {user?.firstName?.[0] || user?.name?.[0] || 'U'}
-        </Text>
-      </View>
-    );
-  };
-
   return (
     <View style={styles.container}>
       {/* Custom Header with Back Button and Centered Title */}
@@ -252,7 +232,12 @@ export default function NegotiationChat({ route, navigation }) {
             onPress={() => navigation.navigate('VendorProfile')}
             activeOpacity={0.7}
           >
-            {renderProfileImage()}
+            <UserAvatar 
+                user={user}
+                size={32}
+                style={styles.profileImage}
+                showInitials={true}
+            />
           </TouchableOpacity>
         </View>
       </View>

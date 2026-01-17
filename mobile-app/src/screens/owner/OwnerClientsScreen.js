@@ -13,19 +13,16 @@ import {
     TextInput,
     Alert,
     RefreshControl,
-    Image
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../services/api';
-import { getProfileImageUrl } from '../../utils/api';
-import AdminNavbar from '../../components/AdminNavbar';
+import UserAvatar from '../../components/UserAvatar';
 
 // Client List Item Component
 const ClientListItem = ({ client, onPress }) => {
     const [clientProjects, setClientProjects] = useState([]);
     const [totalValue, setTotalValue] = useState(0);
-    const [imageError, setImageError] = useState(false);
 
     useEffect(() => {
         // Fetch projects for this client
@@ -49,19 +46,13 @@ const ClientListItem = ({ client, onPress }) => {
 
     return (
         <TouchableOpacity style={styles.listItem} onPress={onPress}>
-            {client.profilePhoto && !imageError ? (
-                      <Image
-                        source={{ uri: getProfileImageUrl(client.profilePhoto) }}
-                        style={styles.clientAvatar}
-                        onError={() => setImageError(true)}
-                      />
-                    ) : (
-                <View style={styles.clientAvatar}>
-                    <Text style={styles.avatarText}>
-                        {client.firstName?.[0] || '?'}
-                    </Text>
-                </View>
-            )}
+            <UserAvatar 
+                user={client} 
+                size={50} 
+                style={styles.clientAvatar} 
+                backgroundColor="#e0e0e0"
+                textColor="#555"
+            />
             <View style={styles.listContent}>
                 <Text style={styles.listTitle}>
                     {client.firstName} {client.lastName}

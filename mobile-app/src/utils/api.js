@@ -332,6 +332,7 @@ export const attendanceAPI = {
     api.get(`/attendance/employee/${employeeId}`, { params: { period } }),
   // Get attendance for a specific user (admin can fetch any employee, employee can fetch self)
   getEmployeeAttendance: (userId) => api.get('/attendance', { params: { userId } }),
+  getAllAttendance: (params = {}) => api.get('/attendance/all', { params }),
 };
 
 // -----------------------------

@@ -18,8 +18,8 @@ import {
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../services/api';
-import { getProfileImageUrl } from '../../utils/api';
 import AdminNavbar from '../../components/AdminNavbar';
+import UserAvatar from '../../components/UserAvatar';
 
 // Attendance Stats Component
 const AttendanceStats = ({ stats }) => {
@@ -48,7 +48,6 @@ const AttendanceStats = ({ stats }) => {
 // Employee List Item
 const EmployeeListItem = ({ employee, onPress }) => {
     const [attendance, setAttendance] = useState(null);
-    const [imageError, setImageError] = useState(false);
 
     useEffect(() => {
         fetchEmployeeAttendance();
@@ -68,19 +67,13 @@ const EmployeeListItem = ({ employee, onPress }) => {
 
     return (
         <TouchableOpacity style={styles.listItem} onPress={onPress}>
-            {employee.profilePhoto && !imageError ? (
-                <Image
-                    source={{ uri: getProfileImageUrl(employee.profilePhoto) }}
-                    style={[styles.employeeAvatar, { backgroundColor: 'transparent' }]}
-                    onError={() => setImageError(true)}
-                />
-            ) : (
-                <View style={styles.employeeAvatar}>
-                    <Text style={styles.avatarText}>
-                        {employee.firstName?.charAt(0)}{employee.lastName?.charAt(0)}
-                    </Text>
-                </View>
-            )}
+            <UserAvatar 
+                user={employee} 
+                size={40} 
+                style={{ marginRight: 12 }} 
+                backgroundColor="#ffc107"
+                textColor="#212529"
+            />
             <View style={styles.listContent}>
                 <Text style={styles.listTitle}>
                     {employee.firstName} {employee.lastName}
@@ -419,19 +412,12 @@ const EmployeeDetailModal = ({ visible, employee, onClose }) => {
                 ) : (
                     <ScrollView style={styles.modalBody}>
                         <View style={styles.profileHeader}>
-                            {employee.profilePhoto && !imageError ? (
-                                <Image
-                                    source={{ uri: getProfileImageUrl(employee.profilePhoto) }}
-                                    style={styles.largeAvatar}
-                                    onError={() => setImageError(true)}
-                                />
-                            ) : (
-                                <View style={[styles.largeAvatar, styles.avatarPlaceholder]}>
-                                    <Text style={styles.largeAvatarText}>
-                                        {employee.firstName?.charAt(0)}{employee.lastName?.charAt(0)}
-                                    </Text>
-                                </View>
-                            )}
+                            <UserAvatar 
+                                user={employee}
+                                size={80} // Approx size for largeAvatar
+                                style={styles.largeAvatar}
+                                showInitials={true}
+                            />
                         </View>
 
                         <View style={styles.detailSection}>

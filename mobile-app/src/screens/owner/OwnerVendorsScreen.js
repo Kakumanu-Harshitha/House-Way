@@ -15,8 +15,9 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { usersAPI, purchaseOrdersAPI, vendorInvoicesAPI, getProfileImageUrl } from '../../utils/api';
+import { usersAPI, purchaseOrdersAPI, vendorInvoicesAPI } from '../../utils/api';
 import AdminNavbar from '../../components/AdminNavbar';
+import UserAvatar from '../../components/UserAvatar';
 
 const getId = (value) => (typeof value === 'string' ? value : value?._id);
 const getInvoiceAmount = (invoice) => Number(invoice?.totalAmount ?? invoice?.amount ?? 0);
@@ -24,23 +25,15 @@ const getOrderFinalAmount = (order) => Number(order?.negotiation?.finalAmount ??
 
 // Vendor List Item
 const VendorListItem = ({ vendor, onPress, pendingCount, ordersCount }) => {
-  const [imageError, setImageError] = useState(false);
-
   return (
     <TouchableOpacity style={styles.listItem} onPress={onPress}>
-      {vendor.profilePhoto && !imageError ? (
-        <Image
-          source={{ uri: getProfileImageUrl(vendor.profilePhoto) }}
-          style={styles.vendorAvatar}
-          onError={() => setImageError(true)}
-        />
-      ) : (
-        <View style={styles.vendorAvatar}>
-          <Text style={styles.avatarText}>
-            {vendor.vendorDetails?.companyName?.[0] || vendor.firstName?.[0] || '?'}
-          </Text>
-        </View>
-      )}
+      <UserAvatar 
+          user={vendor} 
+          size={40} 
+          style={{ marginRight: 12, borderRadius: 8 }} 
+          backgroundColor="#ffc107"
+          textColor="#212529"
+      />
       <View style={styles.listContent}>
         <Text style={styles.listTitle}>
           {vendor.vendorDetails?.companyName || `${vendor.firstName} ${vendor.lastName}`}
@@ -504,7 +497,7 @@ const OwnerVendorsScreen = ({ navigation }) => {
                 />
               ))}
             {vendors.length === 0 && <Text style={styles.emptyText}>No vendors found</Text>}
-            {vendors.length > 0 && searchQuery.trim() && vendors.filter(v => {
+            {vendors.length > 0 && !!searchQuery.trim() && vendors.filter(v => {
               const query = searchQuery.toLowerCase();
               const vendorName = `${v.firstName || ''} ${v.lastName || ''}`.toLowerCase();
               const companyName = (v.vendorDetails?.companyName || '').toLowerCase();

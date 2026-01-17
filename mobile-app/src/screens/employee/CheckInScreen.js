@@ -16,6 +16,7 @@ import { attendanceAPI } from '../../utils/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomNavBar from '../../components/common/BottomNavBar';
 import ToastMessage from '../../components/common/ToastMessage';
+import UserAvatar from '../../components/UserAvatar';
 import { COLORS } from '../../styles/colors';
 
 const CheckInScreen = ({ navigation }) => {
@@ -176,13 +177,16 @@ const CheckInScreen = ({ navigation }) => {
                         </View>
                         <View style={styles.headerRight}>
                             <TouchableOpacity
-                                style={styles.profileBtn}
                                 onPress={() => navigation.navigate('SettingsScreen')}
                                 activeOpacity={0.7}
+                                style={styles.avatarContainer}
                             >
-                                <Text style={styles.profileInitials}>
-                                    {user?.firstName?.[0]}{user?.lastName?.[0]}
-                                </Text>
+                                <UserAvatar
+                                    user={user}
+                                    size={48}
+                                    backgroundColor="#F4D03F"
+                                    textColor="#FFFFFF"
+                                />
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -365,24 +369,13 @@ const styles = StyleSheet.create({
         color: '#1a1a1a',
         marginTop: 2,
     },
-    profileBtn: {
-        width: 48,
-        height: 48,
+    avatarContainer: {
         borderRadius: 24,
-        backgroundColor: '#F4D03F',
-        justifyContent: 'center',
-        alignItems: 'center',
         shadowColor: '#F4D03F',
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.25,
         shadowRadius: 6,
         elevation: 4,
-    },
-    profileInitials: {
-        fontSize: 18,
-        fontWeight: '800',
-        color: '#FFFFFF',
-        letterSpacing: 0.5,
     },
     timeContainer: {
         alignItems: 'center',

@@ -14,46 +14,27 @@ import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import theme from '../styles/theme';
-import { getProfileImageUrl } from '../utils/api';
+import UserAvatar from './UserAvatar';
 
 const CommonHeader = ({ title, userRole, showNotifications = true }) => {
   const { user, logout } = useAuth();
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
 
-  const getUserInitials = () => {
-    if (!user) return 'U';
-    const name = user.name || user.email || '';
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
-
   const ProfileAvatar = ({ size = 'small', style }) => {
-    const [imageError, setImageError] = useState(false);
-    
-    // Determine container and image styles based on size
     const containerStyle = size === 'large' ? styles.largeProfileButton : styles.profileButton;
-    const imageStyle = size === 'large' ? styles.largeProfileImage : styles.profileImage;
-
-    const showImage = user?.profilePhoto && !imageError;
-    const backgroundColor = showImage ? 'transparent' : getRoleColor();
+    
+    // Determine styles based on size
+    const avatarSize = size === 'large' ? 80 : 32;
 
     return (
-      <View style={[containerStyle, { backgroundColor }, style]}>
-        {showImage ? (
-          <Image
-            source={{ uri: getProfileImageUrl(user.profilePhoto) }}
-            style={imageStyle}
-            resizeMode="cover"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <Text style={styles.initialsText}>{getUserInitials()}</Text>
-        )}
+      <View style={[containerStyle, style, { padding: 0, overflow: 'hidden', backgroundColor: 'transparent', borderWidth: 0 }]}>
+        <UserAvatar
+          user={user}
+          size={avatarSize}
+          backgroundColor={getRoleColor()}
+          textColor="#FFFFFF"
+        />
       </View>
     );
   };
@@ -173,7 +154,13 @@ const CommonHeader = ({ title, userRole, showNotifications = true }) => {
                 }
               }}
             >
-              <ProfileAvatar size="small" />
+              <UserAvatar 
+                user={user} 
+                size={36} 
+                backgroundColor={getRoleColor()} 
+                textColor="#FFFFFF"
+                style={styles.profileButton}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -194,9 +181,15 @@ const CommonHeader = ({ title, userRole, showNotifications = true }) => {
           <View style={styles.menuContainer}>
             {/* User Info Section */}
             <View style={styles.userInfoSection}>
-              <ProfileAvatar size="large" />
+              <UserAvatar 
+                user={user} 
+                size={60} 
+                backgroundColor={getRoleColor()} 
+                textColor="#FFFFFF"
+                style={{ marginRight: 12 }}
+              />
               <View style={styles.userDetails}>
-                <Text style={styles.userName}>{user?.name || 'User'}</Text>
+                <Text style={styles.userName}>{user?.firstName} {user?.lastName}</Text>
                 <Text style={styles.userEmail}>{user?.email}</Text>
                 {userRole && (
                   <Text style={styles.userRole}>{userRole}</Text>

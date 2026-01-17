@@ -14,9 +14,10 @@ import {
   Image,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { authAPI, usersAPI, serviceRequestsAPI, getProfileImageUrl } from '../../utils/api';
+import { authAPI, usersAPI, serviceRequestsAPI } from '../../utils/api';
 import theme from '../../styles/theme';
 import { StandardCard } from '../../components/StandardCard';
+import UserAvatar from '../../components/UserAvatar';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
 
 // import PermissionsStatus from '../../components/PermissionsStatus';
@@ -527,17 +528,14 @@ const ProfileScreen = ({ navigation }) => {
                 activeOpacity={0.8}
               >
                 <View style={styles.avatar}>
-                  {profilePhoto ? (
-                    <Image
-                      source={{ uri: getProfileImageUrl(profilePhoto) }}
-                      style={styles.avatarImage}
-                      onError={() => setProfilePhoto(null)}
-                    />
-                  ) : (
-                    <Text style={styles.avatarText}>
-                      {profileData.firstName?.[0]}{profileData.lastName?.[0]}
-                    </Text>
-                  )}
+                  <UserAvatar 
+                    user={{ ...user, profilePhoto: profilePhoto }} 
+                    size={84} 
+                    style={{ borderRadius: 42 }}
+                    backgroundColor="transparent"
+                    textColor={theme.colors.text.white}
+                    showInitials={true}
+                  />
                 </View>
                 <View style={styles.cameraButton}>
                   <Text style={styles.cameraIcon}>📷</Text>

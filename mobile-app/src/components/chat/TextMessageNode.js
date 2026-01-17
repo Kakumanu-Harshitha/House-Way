@@ -11,19 +11,32 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import UserAvatar from '../UserAvatar';
 
-const TextMessageNode = ({ message, isOwnMessage, senderName }) => {
+const TextMessageNode = ({ message, isOwnMessage, senderName, sender }) => {
   return (
     <View style={[
-      styles.container,
-      isOwnMessage ? styles.ownContainer : styles.otherContainer,
+      styles.containerWrapper,
+      isOwnMessage ? styles.ownWrapper : styles.otherWrapper
     ]}>
-      {/* Sender Name (for received messages) */}
-      {!isOwnMessage && senderName && (
-        <Text style={styles.senderName}>{senderName}</Text>
+      {!isOwnMessage && (
+        <UserAvatar
+          user={sender}
+          size={32}
+          style={styles.avatar}
+          showInitials={true}
+        />
       )}
-      
-      {/* Message Content */}
+      <View style={[
+        styles.container,
+        isOwnMessage ? styles.ownContainer : styles.otherContainer,
+      ]}>
+        {/* Sender Name (for received messages) */}
+        {!isOwnMessage && senderName && (
+          <Text style={styles.senderName}>{senderName}</Text>
+        )}
+        
+        {/* Message Content */}
       <Text style={[
         styles.content,
         isOwnMessage ? styles.ownContent : styles.otherContent,
@@ -50,25 +63,40 @@ const TextMessageNode = ({ message, isOwnMessage, senderName }) => {
           />
         )}
       </View>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  containerWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: 8,
+    width: '100%',
+    paddingHorizontal: 8,
+  },
+  ownWrapper: {
+    justifyContent: 'flex-end',
+  },
+  otherWrapper: {
+    justifyContent: 'flex-start',
+  },
+  avatar: {
+    marginRight: 8,
+    marginBottom: 4,
+  },
   container: {
-    maxWidth: '80%',
-    marginVertical: 3,
+    maxWidth: '75%',
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 18,
   },
   ownContainer: {
-    alignSelf: 'flex-end',
     backgroundColor: '#3B82F6',
     borderBottomRightRadius: 4,
   },
   otherContainer: {
-    alignSelf: 'flex-start',
     backgroundColor: '#FFFFFF',
     borderBottomLeftRadius: 4,
     borderWidth: 1,

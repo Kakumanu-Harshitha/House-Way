@@ -15,6 +15,7 @@ import {
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../services/api';
+import UserAvatar from '../../components/UserAvatar';
 
 const ProjectDetailsScreen = ({ route, navigation }) => {
   const { projectId } = route.params || {};
@@ -487,18 +488,12 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         <Text style={styles.teamSectionTitle}>TEAM MEMBERS</Text>
         {team.map((member, idx) => (
           <View key={member._id || idx} style={styles.memberCard}>
-            {member.profilePhoto ? (
-               <Image 
-                 source={{ uri: getProfileImageUrl(member.profilePhoto) }} 
-                 style={styles.memberAvatar} 
-               />
-            ) : (
-              <View style={styles.memberAvatar}>
-                <Text style={styles.memberAvatarText}>
-                  {member.firstName?.[0]}{member.lastName?.[0]}
-                </Text>
-              </View>
-            )}
+            <UserAvatar
+                user={member}
+                size={40}
+                style={styles.memberAvatar}
+                showInitials={true}
+            />
             <View style={styles.memberInfo}>
               <Text style={styles.memberName}>
                 {member.firstName} {member.lastName}

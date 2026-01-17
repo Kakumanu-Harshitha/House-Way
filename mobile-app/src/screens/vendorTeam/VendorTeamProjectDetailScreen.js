@@ -11,13 +11,13 @@ import {
     Modal,
     Alert,
     Platform,
-    Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../context/AuthContext';
-import { projectsAPI, materialRequestsAPI, usersAPI, getProfileImageUrl } from '../../utils/api';
+import { projectsAPI, materialRequestsAPI, usersAPI } from '../../utils/api';
+import UserAvatar from '../../components/UserAvatar';
 import theme from '../../styles/theme';
 
 const MATERIAL_CATEGORIES = [
@@ -339,16 +339,12 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                 {project?.assignedEmployees && project.assignedEmployees.length > 0 ? (
                     project.assignedEmployees.map((employee, index) => (
                         <View key={employee._id || index} style={styles.teamMember}>
-                            {employee.profilePhoto ? (
-                                <Image 
-                                    source={{ uri: getProfileImageUrl(employee.profilePhoto) }} 
-                                    style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]} 
-                                />
-                            ) : (
-                                <View style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]}>
-                                    <Feather name="hard-hat" size={16} color={theme.colors.primary[600]} />
-                                </View>
-                            )}
+                            <UserAvatar
+                                user={employee}
+                                size={32}
+                                backgroundColor={theme.colors.primary[100]}
+                                textColor={theme.colors.primary[600]}
+                            />
                             <View style={{ marginLeft: 10 }}>
                                 <Text style={styles.memberName}>
                                     {employee.firstName} {employee.lastName}
@@ -370,16 +366,12 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                         <View style={{ height: 8 }} />
                         {project.designTeam.map((designer, index) => (
                             <View key={designer._id || index} style={styles.teamMember}>
-                                {designer.profilePhoto ? (
-                                    <Image 
-                                        source={{ uri: getProfileImageUrl(designer.profilePhoto) }} 
-                                        style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]} 
-                                    />
-                                ) : (
-                                    <View style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]}>
-                                        <Feather name="pen-tool" size={16} color={theme.colors.primary[600]} />
-                                    </View>
-                                )}
+                                <UserAvatar
+                                    user={designer}
+                                    size={32}
+                                    backgroundColor={theme.colors.primary[100]}
+                                    textColor={theme.colors.primary[600]}
+                                />
                                 <View style={{ marginLeft: 10 }}>
                                     <Text style={styles.memberName}>
                                         {designer.firstName} {designer.lastName}
@@ -397,16 +389,12 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                         <View style={{ height: 8 }} />
                         {project.assignedVendors.map((vendor, index) => (
                             <View key={vendor._id || index} style={styles.teamMember}>
-                                {vendor.profilePhoto ? (
-                                    <Image 
-                                        source={{ uri: getProfileImageUrl(vendor.profilePhoto) }} 
-                                        style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]} 
-                                    />
-                                ) : (
-                                    <View style={[styles.avatar, { backgroundColor: theme.colors.primary[100] }]}>
-                                        <Feather name="truck" size={16} color={theme.colors.primary[600]} />
-                                    </View>
-                                )}
+                                <UserAvatar
+                                    user={vendor}
+                                    size={32}
+                                    backgroundColor={theme.colors.primary[100]}
+                                    textColor={theme.colors.primary[600]}
+                                />
                                 <View style={{ marginLeft: 10 }}>
                                     <Text style={styles.memberName}>
                                         {vendor.firstName} {vendor.lastName}
@@ -429,16 +417,12 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                 <Text style={styles.cardTitle}>Executive Team</Text>
                 {project?.assignedEmployee ? (
                     <View style={styles.teamMember}>
-                        {project.assignedEmployee.profilePhoto ? (
-                            <Image 
-                                source={{ uri: getProfileImageUrl(project.assignedEmployee.profilePhoto) }} 
-                                style={styles.avatar} 
-                            />
-                        ) : (
-                            <View style={styles.avatar}>
-                                <Feather name="hard-hat" size={20} color={theme.colors.primary[600]} />
-                            </View>
-                        )}
+                        <UserAvatar
+                            user={project.assignedEmployee}
+                            size={40}
+                            backgroundColor={theme.colors.primary[100]}
+                            textColor={theme.colors.primary[600]}
+                        />
                         <View style={styles.memberInfo}>
                             <Text style={styles.memberName}>
                                 {project.assignedEmployee.firstName} {project.assignedEmployee.lastName}
@@ -457,16 +441,12 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                 {project?.designTeam && project.designTeam.length > 0 ? (
                     project.designTeam.map((member, index) => (
                         <View key={index} style={styles.teamMember}>
-                            {member.profilePhoto ? (
-                                <Image 
-                                    source={{ uri: getProfileImageUrl(member.profilePhoto) }} 
-                                    style={styles.avatar} 
-                                />
-                            ) : (
-                                <View style={styles.avatar}>
-                                    <Feather name="pen-tool" size={20} color={theme.colors.primary[600]} />
-                                </View>
-                            )}
+                            <UserAvatar 
+                                user={member} 
+                                size={40}
+                                style={styles.avatar}
+                                showInitials={true}
+                            />
                             <View style={styles.memberInfo}>
                                 <Text style={styles.memberName}>
                                     {member.firstName} {member.lastName}
@@ -501,18 +481,12 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                                 style={styles.vendorItem}
                                 onPress={() => setExpandedVendor(expandedVendor === vendor._id ? null : vendor._id)}
                             >
-                                {vendor.profilePhoto ? (
-                                    <Image 
-                                        source={{ 
-                                            uri: getProfileImageUrl(vendor.profilePhoto) 
-                                        }} 
-                                        style={styles.avatar} 
-                                    />
-                                ) : (
-                                    <View style={styles.avatar}>
-                                        <Feather name="user" size={20} color={theme.colors.primary[600]} />
-                                    </View>
-                                )}
+                                <UserAvatar 
+                                    user={vendor} 
+                                    size={40}
+                                    style={styles.avatar}
+                                    showInitials={true}
+                                />
                                 <View style={{ flex: 1, marginLeft: 12 }}>
                                     <Text style={styles.memberName}>
                                         {vendor.vendorDetails?.companyName || `${vendor.firstName || ''} ${vendor.lastName || ''}`.trim() || 'Vendor'}
@@ -676,16 +650,12 @@ const VendorTeamProjectDetailScreen = ({ navigation, route }) => {
                             style={{ padding: 8 }}
                             onPress={() => navigation.navigate('VendorTeamProfile')}
                         >
-                            {user?.profilePhoto ? (
-                                <Image 
-                                    source={{ uri: getProfileImageUrl(user.profilePhoto) }} 
-                                    style={{ width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' }} 
-                                />
-                            ) : (
-                                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
-                                    <Feather name="user" size={16} color="#FFFFFF" />
-                                </View>
-                            )}
+                            <UserAvatar
+                                user={user}
+                                size={32}
+                                backgroundColor="rgba(255,255,255,0.2)"
+                                textColor="#FFFFFF"
+                            />
                         </TouchableOpacity>
                     </View>
                 </LinearGradient>

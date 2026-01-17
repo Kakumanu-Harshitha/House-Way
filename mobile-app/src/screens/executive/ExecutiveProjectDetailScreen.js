@@ -20,6 +20,7 @@ import { useAttendance } from '../../context/AttendanceContext';
 import { projectsAPI, usersAPI, filesAPI, getProfileImageUrl } from '../../utils/api';
 import ExecutiveBottomNavBar from '../../components/common/ExecutiveBottomNavBar';
 import * as ImagePicker from 'expo-image-picker';
+import UserAvatar from '../../components/UserAvatar';
 
 // Premium White Theme with Gold Accents
 const COLORS = {
@@ -504,16 +505,13 @@ const ExecutiveProjectDetailScreen = ({ navigation, route }) => {
 
                     {project.client && (
                         <View style={styles.clientInfo}>
-                            {project.client.profilePhoto ? (
-                                <Image 
-                                    source={{ uri: getProfileImageUrl(project.client.profilePhoto) }} 
-                                    style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }} 
-                                />
-                            ) : (
-                                <View style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8, backgroundColor: COLORS.primaryLight, justifyContent: 'center', alignItems: 'center' }}>
-                                    <Feather name="user" size={14} color={COLORS.primary} />
-                                </View>
-                            )}
+                            <UserAvatar
+                                user={project.client}
+                                size={24}
+                                style={{ marginRight: 8 }}
+                                backgroundColor={COLORS.primaryLight}
+                                textColor={COLORS.primary}
+                            />
                             <Text style={styles.clientName}>
                                 {project.client.firstName} {project.client.lastName}
                             </Text>
@@ -771,17 +769,15 @@ const ExecutiveProjectDetailScreen = ({ navigation, route }) => {
                                         onPress={() => handleAssignVendor(vendor._id)}
                                         disabled={assigningVendor}
                                     >
-                                        {vendor.profilePhoto && !vendorImageErrors[vendor._id] ? (
-                                            <Image 
-                                                source={{ uri: getProfileImageUrl(vendor.profilePhoto) }} 
-                                                style={styles.vendorAvatar} 
-                                                onError={() => handleVendorImageError(vendor._id)}
+                                        {/* Vendor Avatar */}
+                                        <View style={styles.vendorAvatar}>
+                                            <UserAvatar
+                                                user={vendor}
+                                                size={40}
+                                                backgroundColor={COLORS.primaryLight}
+                                                textColor={COLORS.primary}
                                             />
-                                        ) : (
-                                            <View style={styles.vendorAvatar}>
-                                                <Feather name="user" size={20} color={COLORS.primary} />
-                                            </View>
-                                        )}
+                                        </View>
                                         <View style={{ flex: 1 }}>
                                             <Text style={styles.vendorName}>{vendor.firstName} {vendor.lastName}</Text>
                                             <Text style={styles.vendorEmail}>Vendor Team • {vendor.email}</Text>
@@ -1548,16 +1544,12 @@ const VendorTab = ({ project, onAssign }) => (
         {project.assignedVendors && project.assignedVendors.length > 0 ? (
             project.assignedVendors.map((vendor, index) => (
                 <View key={vendor._id || index} style={styles.vendorCard}>
-                    {vendor.profilePhoto ? (
-                        <Image 
-                            source={{ uri: getProfileImageUrl(vendor.profilePhoto) }} 
-                            style={styles.vendorAvatar} 
-                        />
-                    ) : (
-                        <View style={styles.vendorAvatar}>
-                            <Feather name="user" size={20} color={COLORS.primary} />
-                        </View>
-                    )}
+                    <UserAvatar 
+                        user={vendor} 
+                        size={44}
+                        style={{ marginRight: 12 }}
+                        textColor={COLORS.primary}
+                    />
                     <View style={{ flex: 1 }}>
                         <Text style={styles.vendorName}>{vendor.firstName} {vendor.lastName}</Text>
                         <Text style={styles.vendorEmail}>{vendor.email || 'Vendor Team Employee'}</Text>

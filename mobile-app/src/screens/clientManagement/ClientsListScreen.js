@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
-import { clientsAPI, projectsAPI, getProfileImageUrl } from '../../utils/api';
+import { clientsAPI, projectsAPI } from '../../utils/api';
 import { useAttendance } from '../../context/AttendanceContext';
 import BottomNavBar from '../../components/common/BottomNavBar';
 import { COLORS } from '../../styles/colors';
@@ -22,23 +22,17 @@ import { COLORS } from '../../styles/colors';
 const { width } = Dimensions.get('window');
 
 const ClientCard = ({ item, projects, onPress, getAddress }) => {
-  const [imageError, setImageError] = useState(false);
-  
   return (
     <TouchableOpacity style={styles.clientCard} onPress={() => onPress(item)}>
       <View style={styles.cardHeader}>
         <View style={styles.avatarContainer}>
-          {item.profilePhoto && !imageError ? (
-            <Image
-              source={{ uri: getProfileImageUrl(item.profilePhoto) }}
-              style={styles.avatarImage}
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <Text style={styles.avatarText}>
-              {item.firstName?.[0] || item.email?.[0] || '?'}
-            </Text>
-          )}
+          <UserAvatar 
+            user={item}
+            size={40}
+            style={styles.avatarImage}
+            backgroundColor={COLORS.primary}
+            textColor={COLORS.white}
+          />
         </View>
         
         <View style={styles.clientInfo}>

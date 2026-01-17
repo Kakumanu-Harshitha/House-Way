@@ -16,9 +16,10 @@ import {
 import { Feather, Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../../context/AuthContext';
-import { authAPI, usersAPI, getProfileImageUrl } from '../../../utils/api';
+import { authAPI, usersAPI } from '../../../utils/api';
 import theme from '../../../styles/theme';
 import ChangePasswordModal from '../../../components/ChangePasswordModal';
+import UserAvatar from '../../../components/UserAvatar';
 
 export default function VendorProfile({ navigation }) {
   const { user, logout, updateUser, syncUser } = useAuth();
@@ -240,11 +241,14 @@ export default function VendorProfile({ navigation }) {
       if (uploadResponse.success) {
         const newImage = uploadResponse.data.profilePhoto;
         
-        // Update user context immediately
-        updateUser({
-          ...user,
-          profilePhoto: newImage
-        });
+        // Update user context immediately without triggering redundant API update
+        if (syncUser) {
+          await syncUser({
+            ...user,
+            profilePhoto: newImage,
+            profileImage: newImage // For compatibility
+          });
+        }
         showAlert('Success', 'Profile photo updated successfully');
       } else {
         showAlert('Error', uploadResponse.message || 'Failed to upload photo');
@@ -368,15 +372,18 @@ export default function VendorProfile({ navigation }) {
         <View style={styles.profileCard}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
-              {profilePhoto ? (
-                <Image
-                  source={{ uri: getProfileImageUrl(profilePhoto) }}
-                  style={styles.avatarImage}
-                  onError={() => setProfilePhoto(null)}
-                />
-              ) : (
-                <Text style={styles.avatarText}>{getInitials()}</Text>
-              )}
+              <UserAvatar
+                user={{
+                    firstName: vendor.name?.split(' ')[0] || '',
+                    lastName: vendor.name?.split(' ').slice(1).join(' ') || '',
+                    profilePhoto: profilePhoto
+                }}
+                size={80}
+                style={styles.avatarImage}
+                backgroundColor="#3C5046"
+                textColor="#FFFFFF"
+                showInitials={true}
+              />
             </View>
             <TouchableOpacity style={styles.cameraButton} onPress={handleImagePicker}>
               <Ionicons name="camera" size={16} color="#FFFFFF" />

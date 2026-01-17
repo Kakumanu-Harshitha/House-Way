@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
-import { clientsAPI, getProfileImageUrl } from '../../utils/api';
+import { clientsAPI } from '../../utils/api';
 import { useAttendance } from '../../context/AttendanceContext';
 import BottomNavBar from '../../components/common/BottomNavBar';
 import { COLORS } from '../../styles/colors';
@@ -25,7 +25,6 @@ const ClientProfileScreen = ({ navigation, route }) => {
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [imageError, setImageError] = useState(false);
   const [projects, setProjects] = useState([]);
 
   useEffect(() => {
@@ -140,18 +139,14 @@ const ClientProfileScreen = ({ navigation, route }) => {
 
         {/* Client Info Card */}
         <View style={styles.clientCard}>
-          <View style={[styles.avatarContainer, client.profilePhoto && !imageError && { backgroundColor: 'transparent' }]}>
-            {client.profilePhoto && !imageError ? (
-              <Image
-                source={{ uri: getProfileImageUrl(client.profilePhoto) }}
-                style={styles.avatarImage}
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <Text style={styles.avatarText}>
-                {client.firstName?.charAt(0)}{client.lastName?.charAt(0)}
-              </Text>
-            )}
+          <View style={styles.avatarContainer}>
+            <UserAvatar 
+                user={client} 
+                size={70} 
+                style={{ marginBottom: 12 }} 
+                backgroundColor={COLORS.primary}
+                textColor={COLORS.white}
+            />
           </View>
           <Text style={styles.clientName}>{client.firstName} {client.lastName}</Text>
 

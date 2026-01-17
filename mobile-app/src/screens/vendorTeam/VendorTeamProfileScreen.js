@@ -16,7 +16,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../context/AuthContext';
-import { usersAPI, authAPI, getProfileImageUrl } from '../../utils/api';
+import { usersAPI, authAPI } from '../../utils/api';
 import ToastMessage from '../../components/common/ToastMessage';
 import theme from '../../styles/theme';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
@@ -49,7 +49,7 @@ export default function VendorTeamProfileScreen({ navigation }) {
                 role: user.role || 'employee',
                 subRole: user.subRole || 'vendorTeam',
             });
-            setProfilePhoto(user.profilePhoto || null);
+            setProfilePhoto(user.profilePhoto || user.profileImage || null);
         }
     }, [user]);
 
@@ -80,7 +80,7 @@ export default function VendorTeamProfileScreen({ navigation }) {
                     role: userData.role || 'employee',
                     subRole: userData.subRole || 'vendorTeam',
                 });
-                setProfilePhoto(userData.profilePhoto || null);
+                setProfilePhoto(userData.profilePhoto || userData.profileImage || null);
             }
         } catch (error) {
             console.error('Refresh error:', error);
@@ -369,19 +369,14 @@ export default function VendorTeamProfileScreen({ navigation }) {
                 <View style={styles.profileCard}>
                     <View style={styles.avatarContainer}>
                         <TouchableOpacity onPress={handleImagePicker} disabled={isSaving}>
-                            {profilePhoto ? (
-                                <Image 
-                                    source={{ uri: getProfileImageUrl(profilePhoto) }} 
-                                    style={styles.avatar}
-                                    onError={() => setProfilePhoto(null)}
-                                />
-                            ) : (
-                                <View style={styles.avatarPlaceholder}>
-                                    <Text style={styles.avatarText}>
-                                        {profile.name.split(' ').map(n => n[0]).join('').toUpperCase() || 'V'}
-                                    </Text>
-                                </View>
-                            )}
+                            <UserAvatar
+                                user={{ ...profile, profilePhoto: profilePhoto }}
+                                size={100}
+                                style={styles.avatar}
+                                backgroundColor={theme.colors.primary[100]}
+                                textColor={theme.colors.primary[600]}
+                                showInitials={true}
+                            />
                             <View style={styles.editBadge}>
                                 {isSaving ? (
                                     <ActivityIndicator size="small" color={theme.colors.text.white} />

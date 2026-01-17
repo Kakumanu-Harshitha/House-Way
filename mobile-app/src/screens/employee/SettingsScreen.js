@@ -14,8 +14,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useAttendance } from '../../context/AttendanceContext';
-import { getProfileImageUrl } from '../../utils/api';
+import { api } from '../../services/api';
 import BottomNavBar from '../../components/common/BottomNavBar';
+import UserAvatar from '../../components/UserAvatar';
 import { COLORS } from '../../styles/colors';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
 
@@ -148,19 +149,14 @@ const SettingsScreen = ({ navigation }) => {
                     {/* Profile Summary */}
                     <View style={styles.profileSummary}>
                         <View style={styles.avatarContainer}>
-                            <View style={styles.avatar}>
-                                {user?.profilePhoto && !imageError ? (
-                                    <Image
-                                        source={{ uri: getProfileImageUrl(user.profilePhoto) }}
-                                        style={styles.avatarImage}
-                                        onError={() => setImageError(true)}
-                                    />
-                                ) : (
-                                    <Text style={styles.avatarText}>
-                                        {user?.firstName?.[0]}{user?.lastName?.[0]}
-                                    </Text>
-                                )}
-                            </View>
+                            <UserAvatar
+                                user={user}
+                                size={74}
+                                style={styles.avatar}
+                                backgroundColor={COLORS.card}
+                                textColor={COLORS.primary}
+                                showInitials={true}
+                            />
                         </View>
                         <Text style={styles.userName}>{user?.firstName} {user?.lastName}</Text>
                         <Text style={styles.userEmail}>{user?.email}</Text>

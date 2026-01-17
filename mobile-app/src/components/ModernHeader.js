@@ -9,7 +9,6 @@ import {
   Image,
 } from 'react-native';
 import theme from '../styles/theme';
-import { getProfileImageUrl } from '../utils/api';
 
 const ModernHeader = ({
   title,
@@ -100,18 +99,12 @@ const ModernHeader = ({
               style={styles.profileButton}
               onPress={onProfilePress}
             >
-              {user.profilePhoto ? (
-                <Image
-                  source={{ uri: getProfileImageUrl(user.profilePhoto) }}
-                  style={styles.avatarImage}
-                />
-              ) : (
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {user.firstName?.[0]}{user.lastName?.[0]}
-                  </Text>
-                </View>
-              )}
+              <UserAvatar
+                user={user}
+                size={40}
+                backgroundColor={theme.colors.secondary[500]}
+                textColor="#ffffff"
+              />
             </TouchableOpacity>
           )}
         </View>
