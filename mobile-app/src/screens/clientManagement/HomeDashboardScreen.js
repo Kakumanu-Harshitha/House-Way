@@ -15,6 +15,7 @@ import { useAuth } from '../../context/AuthContext';
 import { dashboardAPI } from '../../utils/api';
 import { useAttendance } from '../../context/AttendanceContext';
 import BottomNavBar from '../../components/common/BottomNavBar';
+import UserAvatar from '../../components/UserAvatar';
 import { COLORS } from '../../styles/colors';
 
 const { width } = Dimensions.get('window');
