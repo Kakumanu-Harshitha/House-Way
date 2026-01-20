@@ -52,10 +52,19 @@ router.get('/', authenticate, authorize('owner', 'employee'), async (req, res) =
 
     const total = await User.countDocuments(query);
 
+    // Ensure profilePhoto is present (alias for profileImage)
+    const usersWithPhoto = users.map(user => {
+      const u = user.toJSON();
+      if (u.profileImage && !u.profilePhoto) {
+        u.profilePhoto = u.profileImage;
+      }
+      return u;
+    });
+
     res.json({
       success: true,
       data: {
-        users,
+        users: usersWithPhoto,
         pagination: {
           current: Number(page),
           pages: Math.ceil(total / limit),
@@ -97,9 +106,18 @@ router.get('/role/:role', authenticate, authorize('owner', 'employee'), async (r
 
     const users = await User.find(query).select('-password');
 
+    // Ensure profilePhoto is present (alias for profileImage)
+    const usersWithPhoto = users.map(user => {
+      const u = user.toJSON();
+      if (u.profileImage && !u.profilePhoto) {
+        u.profilePhoto = u.profileImage;
+      }
+      return u;
+    });
+
     res.json({
       success: true,
-      data: { users },
+      data: { users: usersWithPhoto },
     });
   } catch (error) {
     console.error('Get users by role error:', error);
@@ -257,9 +275,15 @@ router.get('/:id', authenticate, async (req, res) => {
       });
     }
 
+    // Ensure profilePhoto is present (alias for profileImage)
+    const u = user.toJSON();
+    if (u.profileImage && !u.profilePhoto) {
+      u.profilePhoto = u.profileImage;
+    }
+
     res.json({
       success: true,
-      data: { user },
+      data: { user: u },
     });
   } catch (error) {
     console.error('Get user error:', error);
