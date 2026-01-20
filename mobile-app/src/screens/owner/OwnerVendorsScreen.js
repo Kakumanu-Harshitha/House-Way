@@ -25,10 +25,15 @@ const getOrderFinalAmount = (order) => Number(order?.negotiation?.finalAmount ??
 
 // Vendor List Item
 const VendorListItem = ({ vendor, onPress, pendingCount, ordersCount }) => {
+  // Use company name for initials if available, otherwise UserAvatar falls back to dummy names
+  const companyName = vendor.vendorDetails?.companyName;
+  const displayInitials = companyName ? companyName.charAt(0).toUpperCase() : undefined;
+
   return (
     <TouchableOpacity style={styles.listItem} onPress={onPress}>
       <UserAvatar 
           user={vendor} 
+          initials={displayInitials}
           size={40} 
           style={{ marginRight: 12, borderRadius: 8 }} 
           backgroundColor="#ffc107"
